@@ -6,10 +6,10 @@ delivery_descriptions = {
     'H': '',
     'HH': 'Blended',
     'OI': 'Online',
-    'F2': 'Face to face #2',
+    'F2': 'Face to face #2', 
     'O': 'Online',
     'OO': 'Online Only',
-    'F': 'Face to face'
+    'F': 'Face to face' , 'You’ll meet for classes at one of our convenient locations and move through your program with the same cohort of supportive colleagues.'
 }
 
 
