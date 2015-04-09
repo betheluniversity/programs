@@ -5,10 +5,10 @@ delivery_descriptions = {
     'HL': 'Blended',
     'H': '',
     'HH': 'Blended',
-    'OI': 'Online',
-    'F2': 'Face to face #2', 
-    'O': 'Online',
-    'OO': 'Online Only',
+    'OI': 'Online', 'You’ll complete classes and assignments online, allowing you to interact with faculty, have discussions, and encourage your classmates all from a distance.'
+    'F2': 'Face to face #2', 'You’ll meet for classes at one of our convenient locations and move through your program with the same cohort of supportive colleagues.' 
+    'O': 'Online', 'You’ll complete classes and assignments online, allowing you to interact with faculty, have discussions, and encourage your classmates all from a distance.'
+    'OO': 'Online Only', 'You’ll complete classes and assignments online, allowing you to interact with faculty, have discussions, and encourage your classmates all from a distance.'
     'F': 'Face to face' , 'You’ll meet for classes at one of our convenient locations and move through your program with the same cohort of supportive colleagues.'
 }
 
