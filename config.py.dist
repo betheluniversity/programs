@@ -1,0 +1,11 @@
+DB_KEY = 'abc:123'
+
+CON_STRING = """   """
+
+TABLE_NAME = ""
+KEY_COLUMN = ""
+
+WSDL = ""
+AUTH = {'username': '', 'password': ''}
+SITE_ID = ''
+XML_URL = ''
