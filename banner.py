@@ -8,8 +8,7 @@ from sqlalchemy import MetaData
 from sqlalchemy.orm import sessionmaker
 
 # local
-from config import DB_KEY, CON_STRING, TABLE_NAME, KEY_COLOLUMN
-
+from config import DB_KEY, CON_STRING, CODE_SQL, ALL_SQL
 
 class Banner():
 
@@ -44,9 +43,9 @@ class Banner():
 
     def get_program_data(self, code=None):
 
-        sql = "select unique * from %s" % TABLE_NAME
-
         if code:
-            sql += " where %s = '%s'" % (KEY_COLOLUMN, code)
+            sql = CODE_SQL % code
+        else:
+            sql = ALL_SQL
 
         return self.execute(sql)

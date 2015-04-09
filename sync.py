@@ -15,7 +15,9 @@ app = Flask(__name__)
 from bu_cascade.cascade_connector import Cascade
 from bu_cascade.assets.block import Block
 
+from descriptions import delivery_descriptions
 from config import WSDL, AUTH, SITE_ID, XML_URL
+from descriptions import locations, length_type
 
 
 def find(search_list, key):
@@ -40,20 +42,6 @@ class AdultProgramsView(FlaskView):
         self.banner = Banner()
         self.cascade = Cascade(WSDL, AUTH, SITE_ID)
         self.hashes = Set([])
-
-        self.locations = {
-            'SP': 'Saint Paul',
-            'PT': 'Pine Tree',
-            'RF': 'Red Fox',
-            'SD': 'San Diego',
-            'NOR': 'Normandale'
-        }
-
-        self.length_type = {
-            'Y': 'years',
-            'M': 'months',
-            'W': "weeks"
-        }
 
     def get(self):
             r = requests.get(XML_URL)
@@ -103,35 +91,40 @@ class AdultProgramsView(FlaskView):
             # load the data from banner for this code
             data = self.banner.get_program_data(concentration_code)
 
-
-            p = 'syvprgmatt_'
             # update block
+            delivery_details = find_all(banner_info, 'concentration_details')
+            # down to 1 delivery detail, in case any got removed. Just re-populate them all
+            if len(delivery_details) > 1:
+                for entry in range(1, len(delivery_details)):
+                    banner_info.remove(delivery_details[entry])
+
             delivery_details = find_all(banner_info, 'concentration_details')
 
             found_results = False
             for j, row in enumerate(data):
                 found_results = True
                 # concentration
-                find(banner_info, 'concentration_name')['text'] = row[p+'program_desc']
-                find(banner_info, 'total_credits')['text'] = row[p+'prg_hours']
-                # cost_per_credit = row[p+'cost_per_credit']
+                find(banner_info, 'concentration_name')['text'] = row['concentration_name']
+                find(banner_info, 'total_credits')['text'] = row['total_credits']
+                # cost_per_credit = row['cost_per_credit']
 
                 # Are more rows in the SQL than details in the Block?
                 if len(delivery_details) <= j:
                     # clone a details node into a new slot to add the new info
                     # Its going to be immediality overwritten by the new SQL row so it doesn't matter which node
-                    banner_info.append(copy.deepcopy(find(banner_info, 'concentration_details')))
+                    banner_info.append(copy.deepcopy(delivery_details[0]))
                     # re-populate the list with the new item added so we can select it
                     delivery_details = find_all(banner_info, 'concentration_details')
 
                 details = delivery_details[j]['structuredDataNodes']['structuredDataNode']
 
-                find(details, 'delivery_code')['text'] = row[p+'format_1']
-                find(details, 'delivery_label')['text'] = row[p+'format_desc']
-                find(details, 'location')['text'] = self.locations[row[p+'camp_code_1']]
-                find(details, 'start_date')['text'] = row[p+'term_code_start'].split(' - ')[0]
+                find(details, 'delivery_code')['text'] = row['delivery_code']
+                find(details, 'delivery_label')['text'] = row['delivery_label']
+                find(details, 'delivery_description')['text'] = delivery_descriptions[row['delivery_code']]
+                find(details, 'location')['text'] = locations[row['location']]
+                find(details, 'start_date')['text'] = row['start_date'].split(' - ')[0]
 
-                program_length = "%s %s" % (row[p+'prg_length'], self.length_type[row[p+'prg_length_type']])
+                program_length = "%s %s" % (row['program_length'], length_type[row['length_unit']])
                 find(details, 'program_length')['text'] = program_length
 
             if not found_results:

@@ -2,8 +2,8 @@ DB_KEY = 'abc:123'
 
 CON_STRING = """   """
 
-TABLE_NAME = ""
-KEY_COLUMN = ""
+CODE_SQL = ""
+ALL_SQL = ""
 
 WSDL = ""
 AUTH = {'username': '', 'password': ''}

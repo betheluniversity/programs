@@ -13,3 +13,16 @@ delivery_descriptions = {
 }
 
 
+locations = {
+    'SP': 'Saint Paul',
+    'PT': 'Pine Tree',
+    'RF': 'Red Fox',
+    'SD': 'San Diego',
+    'NOR': 'Normandale'
+}
+
+length_type = {
+    'Y': 'years',
+    'M': 'months',
+    'W': "weeks"
+}
