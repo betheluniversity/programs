@@ -1,15 +1,16 @@
 __author__ = 'ejc84332'
 
-from mailer import Mailer
-from mailer import Message
+from flask.ext.mail import Mail, Message
+from sync import app
 
 
 def send_message(subject, body):
 
-    message = Message(From="wufoo@bethel.edu",
-                      To="e-jameson@bethel.edu")
-    message.Subject = subject
-    message.Html = body
+    mail = Mail(app)
 
-    sender = Mailer('localhost')
-    sender.send(message)
+
+    msg = Message(subject=subject, body=body,
+                  sender="no-reply@bethel.edu",
+                  recipients=["e-jameson@bethel.edu"])
+
+    mail.send(msg)

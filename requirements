@@ -4,4 +4,4 @@ Flask-Classy
 requests
 SQLAlchemy
 suds
-
+Flask-Mail

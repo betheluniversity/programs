@@ -9,12 +9,14 @@ from sets import Set
 from banner import Banner
 from flask import Flask
 from flask.ext.classy import FlaskView
+from flask.ext.mail import Mail
 
 app = Flask(__name__)
 
 from bu_cascade.cascade_connector import Cascade
 from bu_cascade.assets.block import Block
 
+from mail import send_message
 from descriptions import delivery_descriptions
 from config import WSDL, AUTH, SITE_ID, XML_URL
 from descriptions import locations, length_type, labels
@@ -73,7 +75,6 @@ class AdultProgramsView(FlaskView):
         try:
             program_hash = nodes[0]['structuredDataNodes']['structuredDataNode'][0]['text']
         except KeyError:
-            # todo email notoficatio
             return False
         self.hashes.add(program_hash)
 
@@ -138,7 +139,7 @@ class AdultProgramsView(FlaskView):
 
             if not found_results:
                 # todo add email notification
-                print "skipped %s" % concentration_code
+                send_message("programs syc alert", "skipped %s" % concentration_code)
             else:
                 # mark the code down as "seen"
                 self.hashes.add(concentration_code)
