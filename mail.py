@@ -1,10 +1,12 @@
 __author__ = 'ejc84332'
 
 from flask.ext.mail import Mail, Message
-from sync import app
 
 
 def send_message(subject, body):
+
+    from sync import app
+
 
     mail = Mail(app)
 
