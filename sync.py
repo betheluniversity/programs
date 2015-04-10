@@ -64,7 +64,9 @@ class AdultProgramsView(FlaskView):
             if key.endswith('Date'):
                 del block_data['asset']['xhtmlDataDefinitionBlock'][key]
 
-        structured_data = block_data['asset']['xhtmlDataDefinitionBlock']['structuredData']
+        block_properties = block_data['asset']['xhtmlDataDefinitionBlock']
+
+        structured_data = block_properties['structuredData']
 
         if structured_data['definitionPath'] != "Blocks/Program":
             return False
@@ -139,7 +141,7 @@ class AdultProgramsView(FlaskView):
 
             if not found_results:
                 # todo add email notification
-                send_message("programs syc alert", "skipped %s" % concentration_code)
+                send_message("programs sync error", "No banner data found for code %s in block %s" % (concentration_code, block_properties['path']))
             else:
                 # mark the code down as "seen"
                 self.hashes.add(concentration_code)
