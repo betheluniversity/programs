@@ -17,7 +17,7 @@ from bu_cascade.assets.block import Block
 
 from descriptions import delivery_descriptions
 from config import WSDL, AUTH, SITE_ID, XML_URL
-from descriptions import locations, length_type
+from descriptions import locations, length_type, labels
 
 
 def find(search_list, key):
@@ -108,9 +108,8 @@ class AdultProgramsView(FlaskView):
                 find(banner_info, 'total_credits')['text'] = row['total_credits']
                 # cost_per_credit = row['cost_per_credit']
 
-                # Are more rows in the SQL than details in the Block?
+                # add a new detail for each row in the SQL result set.
                 if len(delivery_details) <= j:
-                    # clone a details node into a new slot to add the new info
                     # Its going to be immediality overwritten by the new SQL row so it doesn't matter which node
                     banner_info.append(copy.deepcopy(delivery_details[0]))
                     # re-populate the list with the new item added so we can select it
@@ -118,10 +117,20 @@ class AdultProgramsView(FlaskView):
 
                 details = delivery_details[j]['structuredDataNodes']['structuredDataNode']
 
-                find(details, 'delivery_code')['text'] = row['delivery_code']
-                find(details, 'delivery_label')['text'] = row['delivery_label']
+                delivery_code = row['delivery_code']
+                delivery_label = row['delivery_label']
+                if not delivery_label:
+                    delivery_label = labels[delivery_code]
+
+                find(details, 'delivery_code')['text'] = delivery_code
+                find(details, 'delivery_label')['text'] = delivery_label
                 find(details, 'delivery_description')['text'] = delivery_descriptions[row['delivery_code']]
-                find(details, 'location')['text'] = locations[row['location']]
+
+                location = locations[row['location']]
+                if delivery_code in ['O', 'OO']:
+                    location = ''
+
+                find(details, 'location')['text'] = location
                 find(details, 'start_date')['text'] = row['start_date'].split(' - ')[0]
 
                 program_length = "%s %s" % (row['program_length'], length_type[row['length_unit']])

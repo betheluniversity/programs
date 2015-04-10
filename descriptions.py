@@ -5,19 +5,31 @@ delivery_descriptions = {
     'HL': "You'll complete the majority of your classes and assignments online, with periodic face to face meetings at one of our convenient locations.",
     'H': "You'll complete the majority of your classes and assignments online, with periodic face to face meetings at one of our convenient locations.",
     'HH': "You'll complete the majority of your classes and assignments online, with periodic face to face meetings at one of our convenient locations.",
-    'OI': "You'll complete classes and assignments online, allowing you to interact with faculty, have discussions, and encourage your classmates all from a distance.",
+    'OI': "You'll complete classes and assignments online, while attending a week or two of face to face instruction once a year, allowing you to interact with faculty, have discussions, and encourage your classmates.",
     'F2': "You'll meet for classes at one of our convenient locations and move through your program with the same cohort of supportive colleagues.",
     'O': "You'll complete classes and assignments online, allowing you to interact with faculty, have discussions, and encourage your classmates all from a distance.",
     'OO': "You'll complete classes and assignments online, allowing you to interact with faculty, have discussions, and encourage your classmates all from a distance.",
     'F': "You'll meet for classes at one of our convenient locations and move through your program with the same cohort of supportive colleagues.",
 }
 
+labels = {
+    'O': 'Online',
+    'OI': 'Online',
+    'H': 'Blended',
+    'HL': 'Blended',
+    'F2': 'Face to Face',
+    'OO': 'Online',
+    'F': 'Face to Face',
+    'HH': 'Blended'
+}
+
 locations = {
-    'SP': 'Saint Paul',
+    'SP': 'Arden Hills',
+    'AH': 'Arden Hills',
     'PT': 'Pine Tree',
     'RF': 'Red Fox',
     'SD': 'San Diego',
-    'NOR': 'Normandale'
+    'NOR': 'Bloomington'
 }
 
 length_type = {
