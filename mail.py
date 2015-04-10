@@ -12,7 +12,7 @@ def send_message(subject, body):
 
 
     msg = Message(subject=subject, body=body,
-                  sender="no-reply@bethel.edu",
+                  sender="programs-sync@bethel.edu",
                   recipients=["e-jameson@bethel.edu"])
 
     mail.send(msg)
