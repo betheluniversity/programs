@@ -1,7 +1,10 @@
 __author__ = 'ejc84332'
 
+import socket
+
 from flask.ext.mail import Mail, Message
 
+from config import RECIPIENTS
 
 def send_message(subject, body):
 
@@ -13,6 +16,12 @@ def send_message(subject, body):
 
     msg = Message(subject=subject, body=body,
                   sender="programs-sync@bethel.edu",
-                  recipients=["e-jameson@bethel.edu"])
+                  recipients=RECIPIENTS)
 
-    mail.send(msg)
+    try:
+        mail.send(msg)
+    except socket.error:
+        print "failed to send message %s" % body
+        return False
+
+    return True

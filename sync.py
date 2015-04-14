@@ -53,7 +53,24 @@ class AdultProgramsView(FlaskView):
                 block_id = e.get('id')
                 blocks.append(self.process_block(block_id))
 
+
+            # compare hashes to SQL
+            self.check_hashes()
             return "<pre>%s</pre>" % "\n".join(self.hashes)
+
+    def check_hashes(self):
+
+        data = self.banner.get_program_data()
+        banner_hashes = set([row.values()[0] for row in data])
+
+        new_hashes = banner_hashes.difference(self.hashes)
+        if len(new_hashes):
+            new_hashes_message = "<ul><li> %s </li></ul>" % "</li><li>".join(new_hashes)
+            send_message("programs sync new hash(es)", "Found the following new hashes %s" % new_hashes_message)
+            return False
+
+        return True
+
 
     def process_block(self, block_id):
 
