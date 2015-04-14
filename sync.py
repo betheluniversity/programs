@@ -66,7 +66,7 @@ class AdultProgramsView(FlaskView):
         new_hashes = banner_hashes.difference(self.hashes)
         if len(new_hashes):
             new_hashes_message = "<ul><li> %s </li></ul>" % "</li><li>".join(new_hashes)
-            send_message("programs sync new hash(es)", "Found the following new hashes %s" % new_hashes_message)
+            send_message("programs sync new hash(es)", "Found the following new hashes %s" % new_hashes_message, html=True)
             return False
 
         return True

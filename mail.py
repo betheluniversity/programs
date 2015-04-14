@@ -6,17 +6,21 @@ from flask.ext.mail import Mail, Message
 
 from config import RECIPIENTS
 
-def send_message(subject, body):
+def send_message(subject, body, html=False):
 
     from sync import app
 
 
     mail = Mail(app)
 
-
-    msg = Message(subject=subject, body=body,
+    msg = Message(subject=subject,
                   sender="programs-sync@bethel.edu",
                   recipients=RECIPIENTS)
+
+    if html:
+        msg.html = body
+    else:
+        msg.body = body
 
     try:
         mail.send(msg)
