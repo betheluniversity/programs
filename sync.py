@@ -49,9 +49,9 @@ class AdultProgramsView(FlaskView):
             r = requests.get(XML_URL)
             block_xml = ET.fromstring(r.text)
             blocks = []
-            # for e in block_xml.findall('.//system-block'):
-                # block_id = e.get('id')
-                # blocks.append(self.process_block(block_id))
+            for e in block_xml.findall('.//system-block'):
+                block_id = e.get('id')
+                blocks.append(self.process_block(block_id))
 
             # compare hashes to SQL
             self.check_hashes()
