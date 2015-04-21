@@ -9,3 +9,4 @@ WSDL = ""
 AUTH = {'username': '', 'password': ''}
 SITE_ID = ''
 XML_URL = ''
+PUBLISHSET_ID = ''

@@ -18,7 +18,7 @@ from bu_cascade.assets.block import Block
 
 from mail import send_message
 from descriptions import delivery_descriptions
-from config import WSDL, AUTH, SITE_ID, XML_URL
+from config import WSDL, AUTH, SITE_ID, XML_URL, PUBLISHSET_ID
 from descriptions import locations, length_type, labels
 
 
@@ -55,6 +55,9 @@ class AdultProgramsView(FlaskView):
 
             # compare hashes to SQL
             self.check_hashes()
+
+            self.cascade.publish(PUBLISHSET_ID)
+
             return "<pre>%s</pre>" % "\n".join(self.hashes)
 
     def check_hashes(self):
