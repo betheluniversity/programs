@@ -68,7 +68,7 @@ class AdultProgramsView(FlaskView):
 
             more_data = self.banner.get_program_data(row_hash)
             for data_entry in more_data:
-                row_data[row_hash] = data_entry.values()
+                row_data[row_hash] = [str(val) for val in data_entry.values()]
 
         banner_hashes = set(banner_hashes)
 
