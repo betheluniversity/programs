@@ -29,7 +29,9 @@ locations = {
     'PT': 'Pine Tree',
     'RF': 'Red Fox',
     'SD': 'San Diego',
-    'NOR': 'Bloomington'
+    'NOR': 'Bloomington',
+    'NHC': 'North Hennepin Community College'
+
 }
 
 length_type = {

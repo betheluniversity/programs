@@ -49,10 +49,9 @@ class AdultProgramsView(FlaskView):
             r = requests.get(XML_URL)
             block_xml = ET.fromstring(r.text)
             blocks = []
-            for e in block_xml.findall('.//system-block'):
-                block_id = e.get('id')
-                blocks.append(self.process_block(block_id))
-
+            # for e in block_xml.findall('.//system-block'):
+                # block_id = e.get('id')
+                # blocks.append(self.process_block(block_id))
 
             # compare hashes to SQL
             self.check_hashes()
@@ -61,16 +60,29 @@ class AdultProgramsView(FlaskView):
     def check_hashes(self):
 
         data = self.banner.get_program_data()
-        banner_hashes = set([row.values()[0] for row in data])
+        banner_hashes = []
+        row_data = {}
+        for row in data:
+            row_hash = row.values()[0]
+            banner_hashes.append(row_hash)
+
+            more_data = self.banner.get_program_data(row_hash)
+            for data_entry in more_data:
+                row_data[row_hash] = data_entry.values()
+
+        banner_hashes = set(banner_hashes)
 
         new_hashes = banner_hashes.difference(self.hashes)
         if len(new_hashes):
-            new_hashes_message = "<ul><li> %s </li></ul>" % "</li><li>".join(new_hashes)
+            new_hashes_message = "<ul><li>"
+            for entry in new_hashes:
+                new_hashes_message += "</li><li>%s" % row_data[entry]
+            new_hashes_message += "</li></ul>"
+
             send_message("programs sync new hash(es)", "Found the following new hashes %s" % new_hashes_message, html=True)
             return False
 
         return True
-
 
     def process_block(self, block_id):
 
@@ -146,7 +158,11 @@ class AdultProgramsView(FlaskView):
                 find(details, 'delivery_label')['text'] = delivery_label
                 find(details, 'delivery_description')['text'] = delivery_descriptions[row['delivery_code']]
 
-                location = locations[row['location']]
+                try:
+                    location = locations[row['location']]
+                except KeyError:
+                    send_message("programs sync error", "New location found :%s. Re-run sync after adjusting location list." % row['location'])
+
                 if delivery_code in ['O', 'OO']:
                     location = ''
 

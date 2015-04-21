@@ -49,3 +49,4 @@ class Banner():
             sql = ALL_SQL
 
         return self.execute(sql)
+
