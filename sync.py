@@ -121,7 +121,9 @@ class AdultProgramsView(FlaskView):
             concentration = concentration['structuredDataNodes']['structuredDataNode']
 
             concentration_code = concentration[0]['text']
-            banner_info = concentration[3]['structuredDataNodes']['structuredDataNode']
+
+            # some have courses entered so the index isn't the same. use the last one
+            banner_info = concentration[len(concentration)-1]['structuredDataNodes']['structuredDataNode']
 
             # load the data from banner for this code
             data = self.banner.get_program_data(concentration_code)
