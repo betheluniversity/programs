@@ -56,7 +56,7 @@ class AdultProgramsView(FlaskView):
             # compare hashes to SQL
             self.check_hashes()
 
-            self.cascade.publish(PUBLISHSET_ID, 'publishset')
+            # self.cascade.publish(PUBLISHSET_ID, 'publishset')
 
             return "<pre>%s</pre>" % "\n".join(self.hashes)
 
