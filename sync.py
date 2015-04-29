@@ -62,6 +62,7 @@ class AdultProgramsView(FlaskView):
 
     def check_hashes(self):
 
+        # check 2-BS-B-GBUS
         data = self.banner.get_program_data()
         banner_hashes = []
         row_data = {}
@@ -108,9 +109,11 @@ class AdultProgramsView(FlaskView):
         # mark the code down as "seen"
         try:
             program_hash = nodes[0]['structuredDataNodes']['structuredDataNode'][0]['text']
+            self.hashes.add(program_hash)
         except KeyError:
-            return False
-        self.hashes.add(program_hash)
+            # not all prorams have generic codes -- only concentration codes.
+            pass
+
 
         for i, concentration in enumerate(nodes):
 
