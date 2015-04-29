@@ -123,7 +123,10 @@ class AdultProgramsView(FlaskView):
 
             concentration = concentration['structuredDataNodes']['structuredDataNode']
 
-            concentration_code = concentration[0]['text']
+            try:
+                concentration_code = concentration[0]['text']
+            except KeyError:
+                continue
 
             # some have courses entered so the index isn't the same. use the last one
             banner_info = concentration[len(concentration)-1]['structuredDataNodes']['structuredDataNode']
