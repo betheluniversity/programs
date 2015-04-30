@@ -149,7 +149,7 @@ class AdultProgramsView(FlaskView):
                 # concentration
                 find(banner_info, 'concentration_name')['text'] = row['concentration_name']
                 find(banner_info, 'total_credits')['text'] = row['total_credits']
-                find(banner_info, 'cost_per_credit')['text'] = row['cost_per_credit']
+                find(banner_info, 'cost')['text'] = row['cost_per_credit']
 
                 # add a new detail for each row in the SQL result set.
                 if len(delivery_details) <= j:
