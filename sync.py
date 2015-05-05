@@ -19,7 +19,7 @@ from bu_cascade.assets.block import Block
 from mail import send_message
 from descriptions import delivery_descriptions
 from config import WSDL, AUTH, SITE_ID, XML_URL, PUBLISHSET_ID
-from descriptions import locations, length_type, labels
+from descriptions import locations, labels
 
 
 def find(search_list, key):
