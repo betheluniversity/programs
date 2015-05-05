@@ -33,9 +33,3 @@ locations = {
     'NHC': 'North Hennepin Community College'
 
 }
-
-length_type = {
-    'Y': 'years',
-    'M': 'months',
-    'W': "weeks"
-}

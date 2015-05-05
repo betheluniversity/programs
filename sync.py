@@ -148,7 +148,8 @@ class AdultProgramsView(FlaskView):
                 found_results = True
                 # concentration
                 find(banner_info, 'concentration_name')['text'] = row['concentration_name']
-                
+                find(banner_info, 'cost')['text'] = "$%s" % row['cost_per_credit']
+
                 # add a new detail for each row in the SQL result set.
                 if len(delivery_details) <= j:
                     # Its going to be immediality overwritten by the new SQL row so it doesn't matter which node
@@ -178,8 +179,6 @@ class AdultProgramsView(FlaskView):
                 find(details, 'location')['text'] = location
                 find(details, 'start_date')['text'] = row['start_date'].split(' - ')[0]
 
-                program_length = "%s %s" % (row['program_length'], length_type[row['length_unit']])
-                find(details, 'program_length')['text'] = program_length
 
             if not found_results:
                 # todo add email notification
