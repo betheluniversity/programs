@@ -148,9 +148,7 @@ class AdultProgramsView(FlaskView):
                 found_results = True
                 # concentration
                 find(banner_info, 'concentration_name')['text'] = row['concentration_name']
-                find(banner_info, 'total_credits')['text'] = row['total_credits']
-                find(banner_info, 'cost')['text'] = "$%s" % row['cost_per_credit']
-
+                
                 # add a new detail for each row in the SQL result set.
                 if len(delivery_details) <= j:
                     # Its going to be immediality overwritten by the new SQL row so it doesn't matter which node
