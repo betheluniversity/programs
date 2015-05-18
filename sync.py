@@ -114,7 +114,6 @@ class AdultProgramsView(FlaskView):
             # not all prorams have generic codes -- only concentration codes.
             pass
 
-
         for i, concentration in enumerate(nodes):
 
             # every node after the first is a concentration
@@ -135,13 +134,13 @@ class AdultProgramsView(FlaskView):
             data = self.banner.get_program_data(concentration_code)
 
             # update block
-            delivery_details = find_all(banner_info, 'concentration_details')
+            cohort_details = find_all(banner_info, 'cohort_details')
             # down to 1 delivery detail, in case any got removed. Just re-populate them all
-            if len(delivery_details) > 1:
-                for entry in range(1, len(delivery_details)):
-                    banner_info.remove(delivery_details[entry])
+            if len(cohort_details) > 1:
+                for entry in range(1, len(cohort_details)):
+                    banner_info.remove(cohort_details[entry])
 
-            delivery_details = find_all(banner_info, 'concentration_details')
+            cohort_details = find_all(banner_info, 'cohort_details')
 
             found_results = False
             for j, row in enumerate(data):
@@ -151,22 +150,21 @@ class AdultProgramsView(FlaskView):
                 find(banner_info, 'cost')['text'] = "$%s" % row['cost_per_credit']
 
                 # add a new detail for each row in the SQL result set.
-                if len(delivery_details) <= j:
+                if len(cohort_details) <= j:
                     # Its going to be immediality overwritten by the new SQL row so it doesn't matter which node
-                    banner_info.append(copy.deepcopy(delivery_details[0]))
+                    banner_info.append(copy.deepcopy(cohort_details[0]))
                     # re-populate the list with the new item added so we can select it
-                    delivery_details = find_all(banner_info, 'concentration_details')
+                    cohort_details = find_all(banner_info, 'cohort_details')
 
-                details = delivery_details[j]['structuredDataNodes']['structuredDataNode']
+                details = cohort_details[j]['structuredDataNodes']['structuredDataNode']
 
                 delivery_code = row['delivery_code']
                 delivery_label = row['delivery_label']
                 if not delivery_label:
                     delivery_label = labels[delivery_code]
 
-                find(details, 'delivery_code')['text'] = delivery_code
-                find(details, 'delivery_label')['text'] = delivery_label
                 find(details, 'delivery_description')['text'] = delivery_descriptions[row['delivery_code']]
+                find(details, 'delivery_label')['text'] = delivery_label
 
                 try:
                     location = locations[row['location']]
@@ -177,8 +175,11 @@ class AdultProgramsView(FlaskView):
                     location = ''
 
                 find(details, 'location')['text'] = location
-                find(details, 'start_date')['text'] = row['start_date'].split(' - ')[0]
 
+                # break up 'Fall 2015 - CAPS/GS' to 'Fall' and '2015'
+                term, year = row['start_date'].split(' - ')[0].split(' ')
+                find(details, 'semester_start')['text'] = term
+                find(details, 'year_start')['text'] = year
 
             if not found_results:
                 # todo add email notification
