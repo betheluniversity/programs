@@ -68,11 +68,12 @@ class AdultProgramsView(FlaskView):
         row_data = {}
         for row in data:
             row_hash = row.values()[0]
-            banner_hashes.append(row_hash)
+            more_row_data = self.banner.get_program_data(row_hash)
 
-            more_data = self.banner.get_program_data(row_hash)
-            for data_entry in more_data:
+            for data_entry in more_row_data:
                 row_data[row_hash] = [str(val) for val in data_entry.values()]
+
+            banner_hashes.append(row_hash)
 
         banner_hashes = set(banner_hashes)
 
@@ -80,7 +81,9 @@ class AdultProgramsView(FlaskView):
         if len(new_hashes):
             new_hashes_message = "<ul><li>"
             for entry in new_hashes:
-                new_hashes_message += "</li><li>%s: %s" % (entry, ", ".join(row_data[entry]))
+                message = "</li><li>%s: %s" % (entry, ", ".join(row_data[entry]))
+                if 'License' not in message:
+                    new_hashes_message += message
             new_hashes_message += "</li></ul>"
 
             send_message("programs sync new hash(es)", "Found the following new hashes %s" % new_hashes_message, html=True)
