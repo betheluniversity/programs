@@ -58,7 +58,7 @@ class AdultProgramsView(FlaskView):
             self.check_hashes()
 
             if len(self.missing):
-                send_message("programs sync error", "<br/>".join(self.missing))
+                send_message("programs sync error", "<br/>".join(self.missing), html=True)
 
             # self.cascade.publish(PUBLISHSET_ID, 'publishset')
 
