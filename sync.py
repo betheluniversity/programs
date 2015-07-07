@@ -44,6 +44,7 @@ class AdultProgramsView(FlaskView):
         self.banner = Banner()
         self.cascade = Cascade(WSDL, AUTH, SITE_ID)
         self.hashes = Set([])
+        self.missing = []
 
     def get(self):
             r = requests.get(XML_URL)
@@ -56,13 +57,14 @@ class AdultProgramsView(FlaskView):
             # compare hashes to SQL
             self.check_hashes()
 
+            if len(self.missing):
+                send_message("programs sync error", "<br/>".join(self.missing))
+
             # self.cascade.publish(PUBLISHSET_ID, 'publishset')
 
             return "<pre>%s</pre>" % "\n".join(self.hashes)
 
     def check_hashes(self):
-
-        # check 2-BS-B-GBUS
         data = self.banner.get_program_data()
         banner_hashes = []
         row_data = {}
@@ -145,9 +147,8 @@ class AdultProgramsView(FlaskView):
 
             cohort_details = find_all(banner_info, 'cohort_details')
 
-            found_results = False
+            j = None
             for j, row in enumerate(data):
-                found_results = True
                 # concentration
                 find(banner_info, 'concentration_name')['text'] = row['concentration_name']
                 find(banner_info, 'cost')['text'] = "$%s" % row['cost_per_credit']
@@ -184,9 +185,8 @@ class AdultProgramsView(FlaskView):
                 find(details, 'semester_start')['text'] = term
                 find(details, 'year_start')['text'] = year
 
-            if not found_results:
-                # todo add email notification
-                send_message("programs sync error", "No banner data found for code %s in block %s" % (concentration_code, block_properties['path']))
+            if not j:
+                self.missing.append("No banner data found for code %s in block %s" % (concentration_code, block_properties['path']))
             else:
                 # mark the code down as "seen"
                 self.hashes.add(concentration_code)
