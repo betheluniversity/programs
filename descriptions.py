@@ -24,7 +24,7 @@ labels = {
 }
 
 locations = {
-    'SP': 'Arden Hills',
+    'SP': 'St. Paul',
     'AH': 'Arden Hills',
     'PT': 'Pine Tree',
     'RF': 'Red Fox',
