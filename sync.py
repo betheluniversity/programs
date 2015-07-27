@@ -85,7 +85,7 @@ class AdultProgramsView(FlaskView):
             for entry in new_hashes:
                 message = "</li><li>%s: %s" % (entry, ", ".join(row_data[entry]))
                 # if 'License' not in message:
-                #     new_hashes_message += message
+                new_hashes_message += message
             new_hashes_message += "</li></ul>"
 
             send_message("programs sync new hash(es)", "Found the following new hashes %s" % new_hashes_message, html=True)
