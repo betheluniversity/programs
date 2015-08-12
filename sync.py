@@ -185,7 +185,8 @@ class AdultProgramsView(FlaskView):
                 find(details, 'semester_start')['text'] = term
                 find(details, 'year_start')['text'] = year
 
-            if not j:
+            # consider 0 a good value as the first row in enumarate has j=0
+            if j is None:
                 self.missing.append("No banner data found for code %s in block %s" % (concentration_code, block_properties['path']))
             else:
                 # mark the code down as "seen"
