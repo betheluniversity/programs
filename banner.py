@@ -43,10 +43,17 @@ class Banner():
 
     def get_program_data(self, code=None):
 
-        if code:
-            sql = CODE_SQL % code
-        else:
+        if not code:
             sql = ALL_SQL
+            return self.execute(sql)
+        else:
+            sql = CODE_SQL
+            results = self.execute(sql)
+            data = []
+            for row in results:
+                if row['program_code'] == code:
+                    data.append(row)
+            return data
 
-        return self.execute(sql)
+
 
