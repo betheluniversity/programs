@@ -45,10 +45,11 @@ class AdultProgramsView(FlaskView):
         self.cascade = Cascade(WSDL, AUTH, SITE_ID)
         self.hashes = Set([])
         self.missing = []
-        data = self.banner.get_program_data()
-        self.data = [row for row in data]
+        self.data = []
 
     def get(self):
+            data = self.banner.get_program_data()
+            self.data = [row for row in data]
             r = requests.get(XML_URL)
             block_xml = ET.fromstring(r.text)
             blocks = []
@@ -71,7 +72,7 @@ class AdultProgramsView(FlaskView):
         for row in self.data:
             if row['program_code'] == code:
                 results.append(row)
-            return results
+        return results
 
     def check_hashes(self):
         data = self.data
