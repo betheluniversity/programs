@@ -45,6 +45,8 @@ class AdultProgramsView(FlaskView):
         self.cascade = Cascade(WSDL, AUTH, SITE_ID)
         self.hashes = Set([])
         self.missing = []
+        data = self.banner.get_program_data()
+        self.data = [row for row in data]
 
     def get(self):
             r = requests.get(XML_URL)
@@ -64,18 +66,24 @@ class AdultProgramsView(FlaskView):
 
             return "<pre>%s</pre>" % "\n".join(self.hashes)
 
+    def get_data_for_code(self, code):
+        results = []
+        for row in self.data:
+            if row['program_code'] == code:
+                results.append(row)
+            return results
+
     def check_hashes(self):
-        data = self.banner.get_program_data()
+        data = self.data
         banner_hashes = []
         row_data = {}
         for row in data:
             row_hash = row.values()[0]
-            more_row_data = self.banner.get_program_data(row_hash)
-
-            for data_entry in more_row_data:
-                row_data[row_hash] = [str(val) for val in data_entry.values()]
-
-            banner_hashes.append(row_hash)
+            more_row_data = self.get_data_for_code(row_hash)
+            if more_row_data:
+                for data_entry in more_row_data:
+                    row_data[row_hash] = [str(val) for val in data_entry.values()]
+                banner_hashes.append(row_hash)
 
         banner_hashes = set(banner_hashes)
 
@@ -136,7 +144,7 @@ class AdultProgramsView(FlaskView):
             banner_info = concentration[len(concentration)-1]['structuredDataNodes']['structuredDataNode']
 
             # load the data from banner for this code
-            data = self.banner.get_program_data(concentration_code)
+            data = self.get_data_for_code(concentration_code)
 
             # update block
             cohort_details = find_all(banner_info, 'cohort_details')
