@@ -18,7 +18,7 @@ from bu_cascade.assets.block import Block
 
 from mail import send_message
 from descriptions import delivery_descriptions
-from config import WSDL, AUTH, SITE_ID, XML_URL, PUBLISHSET_ID
+from config import WSDL, AUTH, SITE_ID, XML_URL, PUBLISHSET_ID, MISSING_DATA_MESSAGE
 from descriptions import locations, labels
 
 
@@ -61,7 +61,8 @@ class AdultProgramsView(FlaskView):
             self.check_hashes()
 
             if len(self.missing):
-                send_message("programs sync error", "<br/>".join(self.missing), html=True)
+                self.missing.insert(0, MISSING_DATA_MESSAGE)
+                send_message("No Banner Data Found", "<br/>".join(self.missing), html=True)
 
             # self.cascade.publish(PUBLISHSET_ID, 'publishset')
 
@@ -196,7 +197,7 @@ class AdultProgramsView(FlaskView):
 
             # consider 0 a good value as the first row in enumarate has j=0
             if j is None:
-                self.missing.append("No banner data found for code %s in block %s" % (concentration_code, block_properties['path']))
+                self.missing.append("%s" % concentration_code)
             else:
                 # mark the code down as "seen"
                 self.hashes.add(concentration_code)
