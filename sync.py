@@ -61,7 +61,16 @@ class AdultProgramsView(FlaskView):
             self.check_hashes()
 
             if len(self.missing):
+
+                caps_gs = []
+                for code in self.missing:
+                    if code.startswith('2-'):
+                        caps_gs.append(code)
+
                 self.missing.insert(0, MISSING_DATA_MESSAGE)
+                caps_gs.insert(0, MISSING_DATA_MESSAGE)
+
+                send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True)
                 send_message("No Banner Data Found", "<br/>".join(self.missing), html=True)
 
             # self.cascade.publish(PUBLISHSET_ID, 'publishset')
