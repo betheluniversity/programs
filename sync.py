@@ -69,8 +69,9 @@ class AdultProgramsView(FlaskView):
 
                 self.missing.insert(0, MISSING_DATA_MESSAGE)
                 caps_gs.insert(0, MISSING_DATA_MESSAGE)
+                caps_gs.append("If you have any questions, please email web-services@bethel.edu.")
 
-                send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True)
+                send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
                 send_message("No Banner Data Found", "<br/>".join(self.missing), html=True)
 
             # self.cascade.publish(PUBLISHSET_ID, 'publishset')
@@ -206,7 +207,11 @@ class AdultProgramsView(FlaskView):
 
             # consider 0 a good value as the first row in enumarate has j=0
             if j is None:
-                self.missing.append("%s" % concentration_code)
+                self.missing.append(
+                    """
+                    <a href='https://cms.bethel.edu/entity/open.act?id=%s&type=block&'>%s -- %s </a>
+                    """ % (block_properties['id'], block_properties['name'],  concentration_code)
+                )
             else:
                 # mark the code down as "seen"
                 self.hashes.add(concentration_code)
