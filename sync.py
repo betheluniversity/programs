@@ -64,7 +64,8 @@ class AdultProgramsView(FlaskView):
 
                 caps_gs = []
                 for code in self.missing:
-                    if code.startswith('2-'):
+                    # will there be a 2- for some reason outside of a code?
+                    if '2-' in code:
                         caps_gs.append(code)
 
                 self.missing.insert(0, MISSING_DATA_MESSAGE)
