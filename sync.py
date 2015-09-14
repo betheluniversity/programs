@@ -209,9 +209,7 @@ class AdultProgramsView(FlaskView):
             # consider 0 a good value as the first row in enumarate has j=0
             if j is None:
                 self.missing.append(
-                    """
-                    <a href='https://cms.bethel.edu/entity/open.act?id=%s&type=block&'>%s -- %s </a>
-                    """ % (block_properties['id'], block_properties['name'],  concentration_code)
+                    """ %s (%s) """ % (block_properties['name'],  concentration_code)
                 )
             else:
                 # mark the code down as "seen"

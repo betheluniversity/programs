@@ -17,8 +17,8 @@ def send_message(subject, body, html=False, caps_gs=False):
     else:
         recipients = RECIPIENTS
     msg = Message(subject=subject,
-                  sender="web-services@bethel.edu",
-                  recipients=recipients)
+                  sender="no-reply@bethel.edu",
+                  bcc=recipients)
 
     if html:
         msg.html = body
