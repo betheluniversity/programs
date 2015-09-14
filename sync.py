@@ -186,9 +186,17 @@ class AdultProgramsView(FlaskView):
                 delivery_code = row['delivery_code']
                 delivery_label = row['delivery_label']
                 if not delivery_label:
-                    delivery_label = labels[delivery_code]
+                    try:
+                        delivery_label = labels[delivery_code]
+                    except KeyError:
+                        delivery_label = ""
 
-                find(details, 'delivery_description')['text'] = delivery_descriptions[row['delivery_code']]
+                try:
+                    delivery_row_code = delivery_descriptions[row['delivery_code']]
+                except KeyError:
+                    delivery_row_code = ""
+
+                find(details, 'delivery_description')['text'] = delivery_row_code
                 find(details, 'delivery_label')['text'] = delivery_label
 
                 try:
