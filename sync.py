@@ -68,9 +68,8 @@ class AdultProgramsView(FlaskView):
                     if '2-' in code:
                         caps_gs.append(code)
 
-                self.missing.insert(0, MISSING_DATA_MESSAGE)
-                caps_gs.insert(0, MISSING_DATA_MESSAGE)
-                caps_gs.append("If you have any questions, please email web-services@bethel.edu.")
+                caps_gs.insert(0, MISSING_DATA_MESSAGE + "<br/>")
+                caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
 
                 send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
                 send_message("No Banner Data Found", "<br/>".join(self.missing), html=True)
