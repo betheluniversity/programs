@@ -129,6 +129,9 @@ class AdultProgramsView(FlaskView):
         if structured_data['definitionPath'] != "Blocks/Program":
             return False
 
+        if 'seminary' in block_properties['path']:
+            return False
+
         nodes = structured_data['structuredDataNodes']['structuredDataNode']
 
         # mark the code down as "seen"
