@@ -139,13 +139,13 @@ class AdultProgramsView(FlaskView):
             # not all prorams have generic codes -- only concentration codes.
             pass
 
-        for i, concentration in enumerate(nodes):
+        for i, concentration_structure in enumerate(nodes):
 
             # every node after the first is a concentration
             if i == 0:
                 continue
 
-            concentration = concentration['structuredDataNodes']['structuredDataNode']
+            concentration = concentration_structure['structuredDataNodes']['structuredDataNode']
 
             try:
                 concentration_code = concentration[0]['text']
@@ -157,6 +157,13 @@ class AdultProgramsView(FlaskView):
 
             # load the data from banner for this code
             data = self.get_data_for_code(concentration_code)
+
+            if not data:
+                find(banner_info, 'concentration_name')['text'] = ""
+                find(banner_info, 'cost')['text'] = ""
+                details = find(banner_info, 'cohort_details')['structuredDataNodes']['structuredDataNode']
+                for item in details:
+                    item['text'] = ""
 
             # update block
             cohort_details = find_all(banner_info, 'cohort_details')
@@ -225,7 +232,8 @@ class AdultProgramsView(FlaskView):
         asset = {
             'xhtmlDataDefinitionBlock': block_data['asset']['xhtmlDataDefinitionBlock']
         }
-        program_block.edit_asset(asset)
+        results = program_block.edit_asset(asset)
+        print results
         return True
 
 AdultProgramsView.register(app)
