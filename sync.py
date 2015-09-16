@@ -21,6 +21,7 @@ from descriptions import delivery_descriptions
 from config import WSDL, AUTH, SITE_ID, XML_URL, PUBLISHSET_ID, MISSING_DATA_MESSAGE
 from descriptions import locations, labels
 
+from flask import render_template
 
 def find(search_list, key):
     for item in search_list:
@@ -44,7 +45,9 @@ class AdultProgramsView(FlaskView):
         self.banner = Banner()
         self.cascade = Cascade(WSDL, AUTH, SITE_ID)
         self.hashes = Set([])
+        # todo: better name
         self.missing = []
+        self.missing_locations = []
         self.data = []
 
     def get(self):
@@ -72,11 +75,26 @@ class AdultProgramsView(FlaskView):
                 caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
 
                 send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
-                send_message("No Banner Data Found", "<br/>".join(self.missing), html=True)
+                # send_message("No Banner Data Found", "<br/>".join(self.missing), html=True)
 
             # self.cascade.publish(PUBLISHSET_ID, 'publishset')
 
             return "<pre>%s</pre>" % "\n".join(self.hashes)
+
+    def create_readers_digest(self):
+        '''
+        Send a 'readers digest' email with info about the sync to alert everyone about errors.
+        The email has 3 sections:
+            1. Codes that are in blocks but returned no data
+            2. Codes we got data for but are not in any blocks
+            3. Location codes we got in data but we don't have a mapping for
+        :return: None
+        :rtype: None
+        '''
+
+        return
+
+
 
     def get_data_for_code(self, code):
         results = []
@@ -211,7 +229,7 @@ class AdultProgramsView(FlaskView):
                 try:
                     location = locations[row['location']]
                 except KeyError:
-                    send_message("programs sync error", "New location found :%s. Re-run sync after adjusting location list." % row['location'])
+                    self.missing_locations.append(row['location'])
 
                 if delivery_code in ['O', 'OO']:
                     location = ''
