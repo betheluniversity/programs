@@ -4,7 +4,7 @@ import socket
 
 from flask.ext.mail import Mail, Message
 
-from config import RECIPIENTS, CAPS_GS_RECIPIENTS
+from config import RECIPIENTS, CAPS_GS_RECIPIENTS, BCC
 
 def send_message(subject, body, html=False, caps_gs=False):
 
@@ -14,13 +14,15 @@ def send_message(subject, body, html=False, caps_gs=False):
 
     if caps_gs:
         recipients = CAPS_GS_RECIPIENTS
+        bcc = BCC
     else:
         recipients = RECIPIENTS
+        bcc = None
     # todo only BCC AMV
     msg = Message(subject=subject,
                   sender="no-reply@bethel.edu",
-
-                  bcc=recipients)
+                  recipients=recipients,
+                  bcc=bcc)
 
     if html:
         msg.html = body
