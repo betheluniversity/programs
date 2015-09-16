@@ -48,6 +48,7 @@ class AdultProgramsView(FlaskView):
         # todo: better name
         self.missing = []
         self.missing_locations = []
+        self.new_hashes = []
         self.data = []
 
     def get(self):
@@ -56,10 +57,14 @@ class AdultProgramsView(FlaskView):
             r = requests.get(XML_URL)
             block_xml = ET.fromstring(r.text)
             blocks = []
+            i = 0
             for e in block_xml.findall('.//system-block'):
+                # if i:
+                #     continue
                 block_id = e.get('id')
-                blocks.append(self.process_block(block_id))
 
+                blocks.append(self.process_block(block_id))
+                i += 1
             # compare hashes to SQL
             self.check_hashes()
 
@@ -75,10 +80,9 @@ class AdultProgramsView(FlaskView):
                 caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
 
                 send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
-                # send_message("No Banner Data Found", "<br/>".join(self.missing), html=True)
 
             # self.cascade.publish(PUBLISHSET_ID, 'publishset')
-
+            self.create_readers_digest()
             return "<pre>%s</pre>" % "\n".join(self.hashes)
 
     def create_readers_digest(self):
@@ -92,9 +96,12 @@ class AdultProgramsView(FlaskView):
         :rtype: None
         '''
 
-        return
+        missing = self.missing
+        missing_locations = self.missing_locations
+        new_hashes = self.new_hashes
 
-
+        email_body = render_template("readers_digest.html", **locals())
+        send_message("Readers Digest: Program Sync", email_body, html=True)
 
     def get_data_for_code(self, code):
         results = []
@@ -117,19 +124,7 @@ class AdultProgramsView(FlaskView):
 
         banner_hashes = set(banner_hashes)
 
-        new_hashes = banner_hashes.difference(self.hashes)
-        if len(new_hashes):
-            new_hashes_message = "<ul><li>"
-            for entry in new_hashes:
-                message = "</li><li>%s: %s" % (entry, ", ".join(row_data[entry]))
-                # if 'License' not in message:
-                new_hashes_message += message
-            new_hashes_message += "</li></ul>"
-
-            send_message("programs sync new hash(es)", "Found the following new hashes %s" % new_hashes_message, html=True)
-            return False
-
-        return True
+        self.new_hashes = banner_hashes.difference(self.hashes)
 
     def process_block(self, block_id):
 
