@@ -18,7 +18,6 @@ def send_message(subject, body, html=False, caps_gs=False):
     else:
         recipients = RECIPIENTS
         bcc = None
-    # todo only BCC AMV
     msg = Message(subject=subject,
                   sender="no-reply@bethel.edu",
                   recipients=recipients,

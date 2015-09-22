@@ -81,7 +81,7 @@ class AdultProgramsView(FlaskView):
 
                 send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
 
-            # self.cascade.publish(PUBLISHSET_ID, 'publishset')
+            self.cascade.publish(PUBLISHSET_ID, 'publishset')
             self.create_readers_digest()
             return "<pre>%s</pre>" % "\n".join(self.hashes)
 
