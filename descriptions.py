@@ -23,6 +23,8 @@ labels = {
     'OO': 'Online',
     'F': 'Face to Face',
     'HH': 'Blended'
+    'FE': 'Face to Face',
+    'FD': 'Face to Face',
 }
 
 locations = {
