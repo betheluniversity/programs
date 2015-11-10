@@ -212,7 +212,6 @@ class AdultProgramsView(FlaskView):
                         delivery_label = labels[delivery_code]
                     except KeyError:
                         delivery_label = ""
-
                 try:
                     delivery_row_code = delivery_descriptions[row['delivery_code']]
                 except KeyError:
@@ -220,6 +219,7 @@ class AdultProgramsView(FlaskView):
 
                 find(details, 'delivery_description')['text'] = delivery_row_code
                 find(details, 'delivery_label')['text'] = delivery_label
+                find(details, 'delivery_code')['text'] = delivery_code
 
                 try:
                     location = locations[row['location']]
