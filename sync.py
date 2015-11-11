@@ -152,7 +152,7 @@ class AdultProgramsView(FlaskView):
             program_hash = nodes[0]['structuredDataNodes']['structuredDataNode'][0]['text']
             self.hashes.add(program_hash)
         except KeyError:
-            # not all prorams have generic codes -- only concentration codes.
+            # not all programs have generic codes -- only concentration codes.
             pass
 
         for i, concentration_structure in enumerate(nodes):
@@ -219,7 +219,7 @@ class AdultProgramsView(FlaskView):
 
                 find(details, 'delivery_description')['text'] = delivery_row_code
                 find(details, 'delivery_label')['text'] = delivery_label
-                find(details, 'delivery_code')['text'] = delivery_code
+                details.append({'text': delivery_code, 'identifier': 'delivery_code', 'type': 'text'})
 
                 try:
                     location = locations[row['location']]
