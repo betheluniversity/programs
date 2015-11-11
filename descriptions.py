@@ -22,7 +22,7 @@ labels = {
     'F2': 'Face to Face',
     'OO': 'Online',
     'F': 'Face to Face',
-    'HH': 'Blended'
+    'HH': 'Blended',
     'FE': 'Face to Face',
     'FD': 'Face to Face',
 }
