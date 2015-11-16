@@ -17,9 +17,8 @@ from bu_cascade.cascade_connector import Cascade
 from bu_cascade.assets.block import Block
 
 from mail import send_message
-from descriptions import delivery_descriptions
 from config import WSDL, AUTH, SITE_ID, XML_URL, PUBLISHSET_ID, MISSING_DATA_MESSAGE
-from descriptions import locations, labels
+from descriptions import delivery_descriptions, locations, labels, subheadings
 
 from flask import render_template
 
@@ -217,9 +216,26 @@ class AdultProgramsView(FlaskView):
                 except KeyError:
                     delivery_row_code = ""
 
+
+
                 find(details, 'delivery_description')['text'] = delivery_row_code
                 find(details, 'delivery_label')['text'] = delivery_label
-                details.append({'text': delivery_code, 'identifier': 'delivery_code', 'type': 'text'})
+
+                # we need this for better sorting on Cascade
+                if find(details, 'delivery_code'):
+                    find(details, 'delivery_code')['text'] = delivery_code
+                else:
+                    details.append({'text': delivery_code, 'identifier': 'delivery_code', 'type': 'text'})
+
+                # adding delivery sub headings
+                try:
+                    delivery_subheadings = subheadings[delivery_code]
+                except KeyError:
+                    delivery_subheadings = ""
+                if find(details, 'delivery_subheading'):
+                    find(details, 'delivery_subheading')['text'] = delivery_subheadings
+                else:
+                    details.append({'text': delivery_subheadings, 'identifier': 'delivery_subheading', 'type': 'text'})
 
                 try:
                     location = locations[row['location']]

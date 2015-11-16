@@ -27,6 +27,21 @@ labels = {
     'FD': 'Face to Face',
 }
 
+subheadings = {
+    'O': 'Fully Online',
+    'OO': 'Mostly Online',
+    'OI': 'Online with Intensives',
+    'H': '',
+    'HL': '',
+    'HH': '',
+    'F': 'Evening',
+    'F2': 'Evening',
+    'FE': 'Evening',
+    'FD': 'Daytime',
+}
+
+
+
 locations = {
     'SP': 'St. Paul',
     'AH': 'Arden Hills',
