@@ -221,12 +221,6 @@ class AdultProgramsView(FlaskView):
                 find(details, 'delivery_description')['text'] = delivery_row_code
                 find(details, 'delivery_label')['text'] = delivery_label
 
-                # we need this for better sorting on Cascade
-                if find(details, 'delivery_code'):
-                    find(details, 'delivery_code')['text'] = delivery_code
-                else:
-                    details.append({'text': delivery_code, 'identifier': 'delivery_code', 'type': 'text'})
-
                 # adding delivery sub headings
                 try:
                     delivery_subheadings = subheadings[delivery_code]
