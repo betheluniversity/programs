@@ -9,9 +9,9 @@ delivery_descriptions = {
     'F2': "You'll meet for classes at one of our convenient locations.",
     'O': "You'll complete 100% of your coursework online.",
     'OO': "You'll complete over 80% of your coursework online.",
-    'F': "You'll meet for classes at one of our convenient locations.",
-    'FE': "You'll meet for evening classes only at one of our convenient locations.",
-    'FD': "You'll meet for daytime classes only at one of our convenient locations.",
+    'F': "You'll meet during the evening at one of our convenient locations.",
+    'FE': "You'll meet during the evening at one of our convenient locations.",
+    'FD': "You'll meet during the day at one of our convenient locations.",
 }
 
 labels = {
