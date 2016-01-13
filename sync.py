@@ -224,6 +224,7 @@ class AdultProgramsView(FlaskView):
                 try:
                     location = locations[row['location']]
                 except KeyError:
+                    location = ""
                     self.missing_locations.append(row['location'])
 
                 if delivery_code in ['O', 'OO']:
