@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CMS sync page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script>
+        var baseURL = "";//https://programs.bethel.edu/
+
+        function syncAll(timeInterval, send_email){
+            var url = baseURL + "syncAll/"+timeInterval;
+            if(send_email == true){
+                url += "/send"
+            }
+            window.open(url,'_blank');
+        }
+
+        function syncOne(id){
+            var url = baseURL + "syncOne/"+id;
+            $.ajax(url, {
+                success: output
+            });
+        }
+
+        function output(response){
+            document.getElementById('output').innerHTML = response;
+        }
+    </script>
+</head>
+<body>
+<form>
+    <label for="secToWait">Number of seconds to wait between each sync:</label><input type="text" id="secToWait" size="4"/><br/>
+    <input type="button" value="Sync all blocks, don't send email" onclick="syncAll(document.getElementById('secToWait').value, false)">
+    <input type="button" value="Sync all blocks, then send email" onclick="syncAll(document.getElementById('secToWait').value, true)"><br/><br/>
+    <label for="idToSync">ID of the block you want to sync right now:</label><input type="text" id="idToSync" size="40"/><br/>
+    <input type="button" value="Sync that one block right now" onclick="syncOne(document.getElementById('idToSync').value)"/>
+</form><br/><br/>
+<div id="output"></div>
+<script>
+    var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
+    if(!is_chrome){
+        document.getElementById('output').innerHTML = "If you want to stream the live results of the all-sync, please use Chrome";
+    }
+</script>
+</body>
+</html>

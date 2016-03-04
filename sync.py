@@ -1,88 +1,168 @@
-__author__ = 'ejc84332'
-
 import copy
-import requests
 import json
+import requests
+import time
+import unicodedata
 import xml.etree.ElementTree as ET
-from sets import Set
 
 from banner import Banner
-from flask import Flask
-from flask.ext.classy import FlaskView
-from flask.ext.mail import Mail
-
-app = Flask(__name__)
-
 from bu_cascade.cascade_connector import Cascade
 from bu_cascade.assets.block import Block
-
-from mail import send_message
 from config import WSDL, AUTH, SITE_ID, XML_URL, PUBLISHSET_ID, MISSING_DATA_MESSAGE
 from descriptions import delivery_descriptions, locations, labels, subheadings
+from flask import Flask, render_template, Response, session
+from flask.json import JSONEncoder
+from flask.ext.classy import FlaskView, route
+from mail import send_message
 
-from flask import render_template
-
-def find(search_list, key):
-    for item in search_list:
-        if item['identifier'] == key:
-            return item
-
-
-def find_all(search_list, key):
-    matches = []
-    for item in search_list:
-        if item['identifier'] == key:
-            matches.append(item)
-
-    return matches
+__author__ = 'ejc84332', 'phg49389'
 
 
-class AdultProgramsView(FlaskView):
+class MyJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, CascadeBlockProcessor):
+            return {
+                # TODO: it would be nice if this serialization could actually carry over, rather than just being
+                # a stand-in to make the serialization error go away
 
+                # 'banner': obj.banner,
+                # 'cascade': obj.cascade,
+                'hashes': obj.hashes,
+                'missing': obj.missing,
+                'missing_locations': obj.missing_locations,
+                'new_hashes': obj.new_hashes,
+                'data': obj.data
+            }
+        if isinstance(obj, set):
+            return {
+                'data': [[key, obj[key]] for key in obj.__iter__()]
+            }
+        return super(MyJSONEncoder, self).default(obj)
+
+
+app = Flask(__name__)
+app.config.from_object('config')
+app.json_encoder = MyJSONEncoder
+
+
+class CascadeBlockProcessor:
     def __init__(self):
-
         self.banner = Banner()
         self.cascade = Cascade(WSDL, AUTH, SITE_ID)
-        self.hashes = Set([])
-        # todo: better name
+        self.hashes = set([])  # Set([])
+        # todo: better names
         self.missing = []
         self.missing_locations = []
-        self.new_hashes = []
+        self.new_hashes = set([])
         self.data = []
 
-    def get(self):
+    def process_all_blocks(self, time_to_wait):
+        # It should be noted that this only streams to Chrome; Firefox tries to download the JS.
+
+        def generator():
             data = self.banner.get_program_data()
             self.data = [row for row in data]
             r = requests.get(XML_URL)
-            block_xml = ET.fromstring(r.text)
+            # Process the r.text to find the errant characters
+            safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
+            block_xml = ET.fromstring(safe_text)
             blocks = []
             i = 0
-            for e in block_xml.findall('.//system-block'):
+            test_id_list = [
+                "11103e388c586513739ca2fd5edd8d2c",
+                "110fc8dd8c586513739ca2fdf7407940",
+                "110b09018c586513739ca2fde1e2deb3",
+                "110a63c88c586513739ca2fde82119b9",
+                "110a01b88c586513739ca2fd50e42d60",
+                "110936148c586513739ca2fd2331dbdb",
+                "1101075c8c586513739ca2fde94e5f01",
+                "110060e98c586513739ca2fd844a0335",
+                "10fe28ef8c586513739ca2fd0e4d010f",
+                "10fdc7418c586513739ca2fd26efc9ad",
+                "10fd20ac8c586513739ca2fdb1861fc6",
+                "10fca5718c586513739ca2fd51a1c9dc",
+                "10fc23a38c586513739ca2fd1e448350",
+                "10eef2208c586513739ca2fd19d3a3c9",
+                "10eea0238c586513739ca2fd188d5c32",
+                "10ee19578c586513739ca2fd877af98b",
+                "10e59bec8c586513739ca2fd57427dfb",
+                "10e51e538c586513739ca2fdb0c070cb",
+                "10e1c1cc8c586513739ca2fd0bf7d68b",
+                "10d814548c586513739ca2fd263afd50",
+                "10d784568c586513739ca2fde8c97037",
+                "10d71deb8c586513739ca2fd4e9f74ec",
+                "0248bdde8c586513739ca2fd8584236c",
+                "0247c6358c586513739ca2fdd6b1dfe7",
+                "0244f7c08c586513739ca2fd8eb6fc30"
+            ]
+            for e in test_id_list:  # block_xml.findall('.//system-block'):
                 # if i:
                 #     continue
-                block_id = e.get('id')
-
-                blocks.append(self.process_block(block_id))
+                # block_id = e.get('id')
+                # result = self.process_block(block_id)
+                result = self.process_block(e)
+                blocks.append(result)
                 i += 1
-            # compare hashes to SQL
-            self.check_hashes()
+                yield result + "\n"
+                time.sleep(time_to_wait)
+            yield "\nAll blocks have been synced."
 
-            if len(self.missing):
+        return Response(generator(), mimetype='text/json')
 
-                caps_gs = []
-                for code in self.missing:
-                    # will there be a 2- for some reason outside of a code?
-                    if '2-' in code:
-                        caps_gs.append(code)
+    def process_block_by_id(self, id):
+        result = self.process_block(id)
 
-                caps_gs.insert(0, MISSING_DATA_MESSAGE + "<br/>")
-                caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
+        self.check_hashes()
 
-                send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
+        if len(self.missing):
 
-            self.cascade.publish(PUBLISHSET_ID, 'publishset')
-            self.create_readers_digest()
-            return "<pre>%s</pre>" % "\n".join(self.hashes)
+            caps_gs = []
+            for code in self.missing:
+                # will there be a 2- for some reason outside of a code?
+                if '2-' in code:
+                    caps_gs.append(code)
+
+            # caps_gs.insert(0, MISSING_DATA_MESSAGE + "<br/>")
+            caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
+
+            # send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
+
+        self.cascade.publish(PUBLISHSET_ID, 'publishset')
+        self.create_readers_digest()
+        return result  # "%s" % "<br/>".join(self.hashes)
+
+    def find(self, search_list, key):
+        for item in search_list:
+            if item['identifier'] == key:
+                return item
+
+    def find_all(self, search_list, key):
+        matches = []
+        for item in search_list:
+            if item['identifier'] == key:
+                matches.append(item)
+
+        return matches
+
+    def post_process_all(self):
+        print "Now running post_process_all"
+        # compare hashes to SQL
+        self.check_hashes()
+        caps_gs = []
+        if len(self.missing):
+            for code in self.missing:
+                # will there be a 2- for some reason outside of a code?
+                if '2-' in code:
+                    caps_gs.append(code)
+
+        caps_gs.insert(0, MISSING_DATA_MESSAGE + "<br/>")
+        caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
+
+        send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
+
+        self.cascade.publish(PUBLISHSET_ID, 'publishset')
+        self.create_readers_digest()
+        print "post process finished"
 
     def create_readers_digest(self):
         '''
@@ -100,7 +180,7 @@ class AdultProgramsView(FlaskView):
         new_hashes = self.new_hashes
 
         email_body = render_template("readers_digest.html", **locals())
-        send_message("Readers Digest: Program Sync", email_body, html=True)
+        # send_message("Readers Digest: Program Sync", email_body, html=True)
 
     def get_data_for_code(self, code):
         results = []
@@ -130,6 +210,7 @@ class AdultProgramsView(FlaskView):
         program_block = Block(self.cascade, block_id)
         block_data = json.loads(program_block.read_asset())
         # Dates don't edit well
+        my_path =  block_data['asset']['xhtmlDataDefinitionBlock']['path']
         for key in block_data['asset']['xhtmlDataDefinitionBlock'].keys():
             if key.endswith('Date'):
                 del block_data['asset']['xhtmlDataDefinitionBlock'][key]
@@ -139,10 +220,9 @@ class AdultProgramsView(FlaskView):
         structured_data = block_properties['structuredData']
 
         if structured_data['definitionPath'] != "Blocks/Program":
-            return False
-
+            return my_path + " not in Blocks/Program"
         if 'seminary' in block_properties['path']:
-            return False
+            return my_path + " does not have 'seminary' in its path"
 
         nodes = structured_data['structuredDataNodes']['structuredDataNode']
 
@@ -174,33 +254,33 @@ class AdultProgramsView(FlaskView):
             data = self.get_data_for_code(concentration_code)
 
             if not data:
-                find(banner_info, 'concentration_name')['text'] = ""
-                find(banner_info, 'cost')['text'] = ""
-                details = find(banner_info, 'cohort_details')['structuredDataNodes']['structuredDataNode']
+                self.find(banner_info, 'concentration_name')['text'] = ""
+                self.find(banner_info, 'cost')['text'] = ""
+                details = self.find(banner_info, 'cohort_details')['structuredDataNodes']['structuredDataNode']
                 for item in details:
                     item['text'] = ""
 
             # update block
-            cohort_details = find_all(banner_info, 'cohort_details')
+            cohort_details = self.find_all(banner_info, 'cohort_details')
             # down to 1 delivery detail, in case any got removed. Just re-populate them all
             if len(cohort_details) > 1:
                 for entry in range(1, len(cohort_details)):
                     banner_info.remove(cohort_details[entry])
 
-            cohort_details = find_all(banner_info, 'cohort_details')
+            cohort_details = self.find_all(banner_info, 'cohort_details')
 
             j = None
             for j, row in enumerate(data):
                 # concentration
-                find(banner_info, 'concentration_name')['text'] = row['concentration_name']
-                find(banner_info, 'cost')['text'] = "$%s" % row['cost_per_credit']
+                self.find(banner_info, 'concentration_name')['text'] = row['concentration_name']
+                self.find(banner_info, 'cost')['text'] = "$%s" % row['cost_per_credit']
 
                 # add a new detail for each row in the SQL result set.
                 if len(cohort_details) <= j:
                     # Its going to be immediality overwritten by the new SQL row so it doesn't matter which node
                     banner_info.append(copy.deepcopy(cohort_details[0]))
                     # re-populate the list with the new item added so we can select it
-                    cohort_details = find_all(banner_info, 'cohort_details')
+                    cohort_details = self.find_all(banner_info, 'cohort_details')
 
                 details = cohort_details[j]['structuredDataNodes']['structuredDataNode']
 
@@ -216,18 +296,16 @@ class AdultProgramsView(FlaskView):
                 except KeyError:
                     delivery_row_code = ""
 
-
-
-                find(details, 'delivery_description')['text'] = delivery_row_code
-                find(details, 'delivery_label')['text'] = delivery_label
+                self.find(details, 'delivery_description')['text'] = delivery_row_code
+                self.find(details, 'delivery_label')['text'] = delivery_label
 
                 # adding delivery sub headings
                 try:
                     delivery_subheadings = subheadings[delivery_code]
                 except KeyError:
                     delivery_subheadings = ""
-                if find(details, 'delivery_subheading'):
-                    find(details, 'delivery_subheading')['text'] = delivery_subheadings
+                if self.find(details, 'delivery_subheading'):
+                    self.find(details, 'delivery_subheading')['text'] = delivery_subheadings
                 else:
                     details.append({'text': delivery_subheadings, 'identifier': 'delivery_subheading', 'type': 'text'})
 
@@ -240,12 +318,12 @@ class AdultProgramsView(FlaskView):
                 if delivery_code in ['O', 'OO']:
                     location = ''
 
-                find(details, 'location')['text'] = location
+                self.find(details, 'location')['text'] = location
 
                 # break up 'Fall 2015 - CAPS/GS' to 'Fall' and '2015'
                 term, year = row['start_date'].split(' - ')[0].split(' ')
-                find(details, 'semester_start')['text'] = term
-                find(details, 'year_start')['text'] = year
+                self.find(details, 'semester_start')['text'] = term
+                self.find(details, 'year_start')['text'] = year
 
             # consider 0 a good value as the first row in enumarate has j=0
             if j is None:
@@ -259,9 +337,41 @@ class AdultProgramsView(FlaskView):
         asset = {
             'xhtmlDataDefinitionBlock': block_data['asset']['xhtmlDataDefinitionBlock']
         }
-        results = program_block.edit_asset(asset)
-        print results
-        return True
+        program_block.edit_asset(asset)
+        return my_path + " successfully updated and synced"
+
+
+@app.before_request
+def before():
+    session['send_email'] = False
+
+
+@app.after_request
+def after(response):
+    if session['send_email']:
+        session['cbp'].post_process_all()
+    return response
+
+
+class AdultProgramsView(FlaskView):
+    def get(self):
+        return render_template("sync_template.html")
+
+    @route("/syncAll/<time_interval>")
+    @route("/syncAll/<time_interval>/<send_email>")
+    def syncAll(self, time_interval, send_email=False):
+        time_interval = float(time_interval)
+        cbp = CascadeBlockProcessor()
+        if send_email:
+            session['send_email'] = True
+            session['cbp'] = cbp  # This might not retain the hashes and missing?
+        return cbp.process_all_blocks(time_interval)
+
+    # TODO: AnnMarie asked if this could be made into a block path instead of identifier
+    def syncOne(self, identifier):
+        cbp = CascadeBlockProcessor()
+        return cbp.process_block_by_id(identifier)
+
 
 AdultProgramsView.register(app)
 

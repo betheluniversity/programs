@@ -1,7 +1,4 @@
 __author__ = 'ejc84332'
-
-
-__author__ = 'ejc84332'
 # python
 import sqlalchemy
 from sqlalchemy import MetaData
@@ -14,7 +11,7 @@ class Banner():
 
     def __init__(self):
         self.engine, self.metadata, self.session = self.get_connection()
-        # Am I goign to get into trouble for re-using these curors?
+        # Am I going to get into trouble for re-using these cursors?
         self.call_cursor, self.result_cursor = self.get_cursor_connection()
 
     def get_cursor_connection(self):
@@ -42,10 +39,6 @@ class Banner():
         return result
 
     def get_program_data(self):
-
-            sql = CODE_SQL
-            results = self.execute(sql)
-            return results
-
-
-
+        sql = CODE_SQL
+        results = self.execute(sql)
+        return results
