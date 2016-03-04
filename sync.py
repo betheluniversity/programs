@@ -6,8 +6,8 @@ import unicodedata
 import xml.etree.ElementTree as ET
 
 from banner import Banner
-from bu_cascade.cascade_connector import Cascade
 from bu_cascade.assets.block import Block
+from bu_cascade.cascade_connector import Cascade
 from config import WSDL, AUTH, SITE_ID, XML_URL, PUBLISHSET_ID, MISSING_DATA_MESSAGE
 from descriptions import delivery_descriptions, locations, labels, subheadings
 from flask import Flask, render_template, Response, session
@@ -68,39 +68,11 @@ class CascadeBlockProcessor:
             block_xml = ET.fromstring(safe_text)
             blocks = []
             i = 0
-            test_id_list = [
-                "11103e388c586513739ca2fd5edd8d2c",
-                "110fc8dd8c586513739ca2fdf7407940",
-                "110b09018c586513739ca2fde1e2deb3",
-                "110a63c88c586513739ca2fde82119b9",
-                "110a01b88c586513739ca2fd50e42d60",
-                "110936148c586513739ca2fd2331dbdb",
-                "1101075c8c586513739ca2fde94e5f01",
-                "110060e98c586513739ca2fd844a0335",
-                "10fe28ef8c586513739ca2fd0e4d010f",
-                "10fdc7418c586513739ca2fd26efc9ad",
-                "10fd20ac8c586513739ca2fdb1861fc6",
-                "10fca5718c586513739ca2fd51a1c9dc",
-                "10fc23a38c586513739ca2fd1e448350",
-                "10eef2208c586513739ca2fd19d3a3c9",
-                "10eea0238c586513739ca2fd188d5c32",
-                "10ee19578c586513739ca2fd877af98b",
-                "10e59bec8c586513739ca2fd57427dfb",
-                "10e51e538c586513739ca2fdb0c070cb",
-                "10e1c1cc8c586513739ca2fd0bf7d68b",
-                "10d814548c586513739ca2fd263afd50",
-                "10d784568c586513739ca2fde8c97037",
-                "10d71deb8c586513739ca2fd4e9f74ec",
-                "0248bdde8c586513739ca2fd8584236c",
-                "0247c6358c586513739ca2fdd6b1dfe7",
-                "0244f7c08c586513739ca2fd8eb6fc30"
-            ]
-            for e in test_id_list:  # block_xml.findall('.//system-block'):
+            for e in block_xml.findall('.//system-block'):
                 # if i:
                 #     continue
-                # block_id = e.get('id')
-                # result = self.process_block(block_id)
-                result = self.process_block(e)
+                block_id = e.get('id')
+                result = self.process_block(block_id)
                 blocks.append(result)
                 i += 1
                 yield result + "\n"
@@ -145,7 +117,6 @@ class CascadeBlockProcessor:
         return matches
 
     def post_process_all(self):
-        print "Now running post_process_all"
         # compare hashes to SQL
         self.check_hashes()
         caps_gs = []
@@ -162,7 +133,6 @@ class CascadeBlockProcessor:
 
         self.cascade.publish(PUBLISHSET_ID, 'publishset')
         self.create_readers_digest()
-        print "post process finished"
 
     def create_readers_digest(self):
         '''
@@ -180,7 +150,7 @@ class CascadeBlockProcessor:
         new_hashes = self.new_hashes
 
         email_body = render_template("readers_digest.html", **locals())
-        # send_message("Readers Digest: Program Sync", email_body, html=True)
+        send_message("Readers Digest: Program Sync", email_body, html=True)
 
     def get_data_for_code(self, code):
         results = []
