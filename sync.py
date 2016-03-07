@@ -48,7 +48,7 @@ class CascadeBlockProcessor:
     def __init__(self):
         self.banner = Banner()
         self.cascade = Cascade(WSDL, AUTH, SITE_ID)
-        self.hashes = set([])  # Set([])
+        self.hashes = set([])
         # todo: better names
         self.missing = []
         self.missing_locations = []
@@ -59,6 +59,7 @@ class CascadeBlockProcessor:
         # It should be noted that this only streams to Chrome; Firefox tries to download the JS as a file.
 
         def generator():
+            yield "Beginning sync of all blocks\n\n"
             data = self.banner.get_program_data()
             self.data = [row for row in data]
             r = requests.get(XML_URL)
@@ -318,21 +319,12 @@ class CascadeBlockProcessor:
         return my_path + " successfully updated and synced"
 
 
-@app.before_request
-def before():
-    session['send_email'] = False
-    session['cpb'] = CascadeBlockProcessor()
-
-
-@app.after_request
-def after(response):
-    if session['send_email']:
-        session['cbp'].post_process_all()
-    return response
-
-
 class AdultProgramsView(FlaskView):
-    def get(self):
+    def __init__(self):
+        self.send_email = False
+        self.cbp = CascadeBlockProcessor()
+
+    def index(self):
         return render_template("sync_template.html")
 
     @route("/sync-all/<time_interval>")
@@ -340,7 +332,7 @@ class AdultProgramsView(FlaskView):
     def sync_all(self, time_interval, send_email=False):
         time_interval = float(time_interval)
         if send_email:
-            session['send_email'] = True
+            self.send_email = True
         return session['cpb'].process_all_blocks(time_interval)
 
     @route("/sync-one-id/<identifier>")
@@ -350,6 +342,12 @@ class AdultProgramsView(FlaskView):
     @route("/sync-one-path/<path:path>")
     def sync_one_path(self, path):
         return session['cpb'].process_block_by_path(path)
+
+    # This after request needs to be here because it would need to send an email AFTER the return statement of sync_all
+    def after_request(self, name, response):
+        if self.send_email:
+            self.cbp.post_process_all()
+        return response
 
 
 AdultProgramsView.register(app)

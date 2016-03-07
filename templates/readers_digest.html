@@ -4,28 +4,28 @@
 {#            3. Location codes we got in data but we don't have a mapping for#}
 
 {% if missing %}
-<h2>Missing Data</h2>
-<ul>
-    {% for m in missing %}
-        <li>{{ m }}</li>
-    {% endfor %}
-</ul>
+    <h2>Missing Data</h2>
+    <ul>
+        {% for m in missing %}
+            <li>{{ m }}</li>
+        {% endfor %}
+    </ul>
 {% endif %}
 
 {% if new_hashes %}
-<h2>No code in a block</h2>
-<ul>
-    {% for new in new_hashes %}
-        <li>{{ new }}</li>
-    {% endfor %}
-</ul>
+    <h2>No code in a block</h2>
+    <ul>
+        {% for new in new_hashes %}
+            <li>{{ new }}</li>
+        {% endfor %}
+    </ul>
 {% endif %}
 
 {% if missing_locations %}
-<h2>New Location Code</h2>
-<ul>
-    {% for missing in missing_locations %}
-        <li>{{ missing }}</li>
-    {% endfor %}
-</ul>
+    <h2>New Location Code</h2>
+    <ul>
+        {% for missing in missing_locations %}
+            <li>{{ missing }}</li>
+        {% endfor %}
+    </ul>
 {% endif %}
