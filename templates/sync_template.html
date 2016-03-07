@@ -7,16 +7,23 @@
     <script>
         var baseURL = "";//https://programs.bethel.edu/
 
-        function syncAll(timeInterval, send_email){
-            var url = baseURL + "syncAll/"+timeInterval;
+        function sync_all(timeInterval, send_email){
+            var url = baseURL + "sync-all/"+timeInterval;
             if(send_email == true){
                 url += "/send"
             }
             window.open(url,'_blank');
         }
 
-        function syncOne(id){
-            var url = baseURL + "syncOne/"+id;
+        function sync_one_id(id){
+            var url = baseURL + "sync-one-id/"+id;
+            $.ajax(url, {
+                success: output
+            });
+        }
+
+        function sync_one_path(path){
+            var url = baseURL + "sync-one-path/"+path;
             $.ajax(url, {
                 success: output
             });
@@ -30,10 +37,11 @@
 <body>
 <form>
     <label for="secToWait">Number of seconds to wait between each sync:</label><input type="text" id="secToWait" size="4"/><br/>
-    <input type="button" value="Sync all blocks, don't send email" onclick="syncAll(document.getElementById('secToWait').value, false)">
-    <input type="button" value="Sync all blocks, then send email" onclick="syncAll(document.getElementById('secToWait').value, true)"><br/><br/>
-    <label for="idToSync">ID of the block you want to sync right now:</label><input type="text" id="idToSync" size="40"/><br/>
-    <input type="button" value="Sync that one block right now" onclick="syncOne(document.getElementById('idToSync').value)"/>
+    <input type="button" value="Sync all blocks, don't send email" onclick="sync_all(document.getElementById('secToWait').value, false)">
+    <input type="button" value="Sync all blocks, then send email" onclick="sync_all(document.getElementById('secToWait').value, true)"><br/><br/>
+    <label for="idToSync">ID or path of the block you want to sync right now:</label><input type="text" id="oneSync" size="40"/><br/>
+    <input type="button" value="Sync one block by id" onclick="sync_one_id(document.getElementById('oneSync').value)"/>
+    <input type="button" value="Sync one block by path" onclick="sync_one_path(document.getElementById('oneSync').value)"/>
 </form><br/><br/>
 <div id="output"></div>
 <script>

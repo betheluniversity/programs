@@ -1,3 +1,4 @@
+import ast
 import copy
 import json
 import requests
@@ -14,8 +15,6 @@ from flask import Flask, render_template, Response, session
 from flask.json import JSONEncoder
 from flask.ext.classy import FlaskView, route
 from mail import send_message
-
-__author__ = 'ejc84332', 'phg49389'
 
 
 class MyJSONEncoder(JSONEncoder):
@@ -57,7 +56,7 @@ class CascadeBlockProcessor:
         self.data = []
 
     def process_all_blocks(self, time_to_wait):
-        # It should be noted that this only streams to Chrome; Firefox tries to download the JS.
+        # It should be noted that this only streams to Chrome; Firefox tries to download the JS as a file.
 
         def generator():
             data = self.banner.get_program_data()
@@ -67,19 +66,27 @@ class CascadeBlockProcessor:
             safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
             block_xml = ET.fromstring(safe_text)
             blocks = []
-            i = 0
+
+            # Any blocks that begin with any of these paths will NOT by synced by this method
+            paths_to_ignore = ["_shared-content/program-blocks/undergrad", "_shared-content/program-blocks/seminary"]
+
             for e in block_xml.findall('.//system-block'):
-                # if i:
-                #     continue
                 block_id = e.get('id')
+                block = Block(self.cascade, block_id)
+                block_path = ast.literal_eval(block.read_asset())['asset']['xhtmlDataDefinitionBlock']['path']
+                if any([path in block_path for path in paths_to_ignore]):
+                    continue
                 result = self.process_block(block_id)
                 blocks.append(result)
-                i += 1
                 yield result + "\n"
                 time.sleep(time_to_wait)
             yield "\nAll blocks have been synced."
 
         return Response(generator(), mimetype='text/json')
+
+    def process_block_by_path(self, path):
+        block_id = ast.literal_eval(Block(self.cascade, "/"+path).read_asset())['asset']['xhtmlDataDefinitionBlock']['id']
+        return self.process_block_by_id(block_id)
 
     def process_block_by_id(self, id):
         result = self.process_block(id)
@@ -94,10 +101,10 @@ class CascadeBlockProcessor:
                 if '2-' in code:
                     caps_gs.append(code)
 
-            # caps_gs.insert(0, MISSING_DATA_MESSAGE + "<br/>")
+            caps_gs.insert(0, MISSING_DATA_MESSAGE + "<br/>")
             caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
 
-            # send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
+            send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
 
         self.cascade.publish(PUBLISHSET_ID, 'publishset')
         self.create_readers_digest()
@@ -314,6 +321,7 @@ class CascadeBlockProcessor:
 @app.before_request
 def before():
     session['send_email'] = False
+    session['cpb'] = CascadeBlockProcessor()
 
 
 @app.after_request
@@ -327,20 +335,21 @@ class AdultProgramsView(FlaskView):
     def get(self):
         return render_template("sync_template.html")
 
-    @route("/syncAll/<time_interval>")
-    @route("/syncAll/<time_interval>/<send_email>")
-    def syncAll(self, time_interval, send_email=False):
+    @route("/sync-all/<time_interval>")
+    @route("/sync-all/<time_interval>/<send_email>")
+    def sync_all(self, time_interval, send_email=False):
         time_interval = float(time_interval)
-        cbp = CascadeBlockProcessor()
         if send_email:
             session['send_email'] = True
-            session['cbp'] = cbp  # This might not retain the hashes and missing?
-        return cbp.process_all_blocks(time_interval)
+        return session['cpb'].process_all_blocks(time_interval)
 
-    # TODO: AnnMarie asked if this could be made into a block path instead of identifier
-    def syncOne(self, identifier):
-        cbp = CascadeBlockProcessor()
-        return cbp.process_block_by_id(identifier)
+    @route("/sync-one-id/<identifier>")
+    def sync_one_id(self, identifier):
+        return session['cpb'].process_block_by_id(identifier)
+
+    @route("/sync-one-path/<path:path>")
+    def sync_one_path(self, path):
+        return session['cpb'].process_block_by_path(path)
 
 
 AdultProgramsView.register(app)
