@@ -19,6 +19,9 @@ from mail import send_message
 app = Flask(__name__)
 app.config.from_object('config')
 
+from raven.contrib.flask import Sentry
+sentry = Sentry(app, dsn=app.config['RAVEN_URL'])
+
 
 class CascadeBlockProcessor:
     def __init__(self):
