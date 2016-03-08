@@ -32,15 +32,16 @@ class CascadeBlockProcessor:
         self.missing = []
         self.missing_locations = []
         self.new_hashes = set([])
-        self.data = []
+        data = self.banner.get_program_data()
+        self.data = [row for row in data]
 
     def process_all_blocks(self, time_to_wait):
         # It should be noted that this only streams to Chrome; Firefox tries to download the JS as a file.
 
         def generator():
             yield "Beginning sync of all blocks\n\n"
-            data = self.banner.get_program_data()
-            self.data = [row for row in data]
+            # data = self.banner.get_program_data()
+            # self.data = [row for row in data]
             r = requests.get(XML_URL)
             # Process the r.text to find the errant characters
             safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
