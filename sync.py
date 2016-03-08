@@ -53,11 +53,11 @@ class CascadeBlockProcessor:
 
             for e in block_xml.findall('.//system-block'):
                 block_id = e.get('id')
-                block = Block(self.cascade, block_id)
-                # read_asset returns a string version of a python dict. todo, move this to connector
-                block_path = ast.literal_eval(block.read_asset())['asset']['xhtmlDataDefinitionBlock']['path']
+                block_path = e.find('path').text
                 if any([path in block_path for path in paths_to_ignore]):
                     continue
+                block = Block(self.cascade, block_id)
+                # read_asset returns a string version of a python dict. todo, move this to connector
                 result = self.process_block(block_id)
                 blocks.append(result)
                 yield result + "\n"
