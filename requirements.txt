@@ -5,3 +5,4 @@ requests
 SQLAlchemy
 suds
 Flask-Mail
+raven[flask]
