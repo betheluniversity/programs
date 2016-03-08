@@ -11,37 +11,13 @@ from bu_cascade.assets.block import Block
 from bu_cascade.cascade_connector import Cascade
 from config import WSDL, AUTH, SITE_ID, XML_URL, PUBLISHSET_ID, MISSING_DATA_MESSAGE
 from descriptions import delivery_descriptions, locations, labels, subheadings
-from flask import Flask, render_template, Response, session
-from flask.json import JSONEncoder
+from flask import Flask, render_template, Response  # , session
 from flask.ext.classy import FlaskView, route
 from mail import send_message
 
 
-class MyJSONEncoder(JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, CascadeBlockProcessor):
-            return {
-                # TODO: it would be nice if this serialization could actually carry over, rather than just being
-                # a stand-in to make the serialization error go away
-
-                # 'banner': obj.banner,
-                # 'cascade': obj.cascade,
-                'hashes': obj.hashes,
-                'missing': obj.missing,
-                'missing_locations': obj.missing_locations,
-                'new_hashes': obj.new_hashes,
-                'data': obj.data
-            }
-        if isinstance(obj, set):
-            return {
-                'data': [[key, obj[key]] for key in obj.__iter__()]
-            }
-        return super(MyJSONEncoder, self).default(obj)
-
-
 app = Flask(__name__)
 app.config.from_object('config')
-app.json_encoder = MyJSONEncoder
 
 
 class CascadeBlockProcessor:
@@ -333,15 +309,15 @@ class AdultProgramsView(FlaskView):
         time_interval = float(time_interval)
         if send_email:
             self.send_email = True
-        return session['cpb'].process_all_blocks(time_interval)
+        return self.cbp.process_all_blocks(time_interval)
 
     @route("/sync-one-id/<identifier>")
     def sync_one_id(self, identifier):
-        return session['cpb'].process_block_by_id(identifier)
+        return self.cbp.process_block_by_id(identifier)
 
     @route("/sync-one-path/<path:path>")
     def sync_one_path(self, path):
-        return session['cpb'].process_block_by_path(path)
+        return self.cbp.process_block_by_path(path)
 
     # This after request needs to be here because it would need to send an email AFTER the return statement of sync_all
     def after_request(self, name, response):
