@@ -27,23 +27,20 @@ class CascadeBlockProcessor:
     def __init__(self):
         self.banner = Banner()
         self.cascade = Cascade(WSDL, AUTH, SITE_ID)
-        self.hashes = set([])
+        self.hashes = set()
         # todo: better names
         self.missing = []
         self.missing_locations = []
-        self.new_hashes = set([])
-        data = self.banner.get_program_data()
-        self.data = [row for row in data]
+        self.new_hashes = set()
+        self.data = [row for row in self.banner.get_program_data()]
 
-    def process_all_blocks(self, time_to_wait):
+    def process_all_blocks(self, time_to_wait, send_email_after):
         # It should be noted that this only streams to Chrome; Firefox tries to download the JS as a file.
 
         def generator():
             yield "Beginning sync of all blocks\n\n"
-            # data = self.banner.get_program_data()
-            # self.data = [row for row in data]
             r = requests.get(XML_URL)
-            # Process the r.text to find the errant characters
+            # Process the r.text to find the errant, non-ASCII characters
             safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
             block_xml = ET.fromstring(safe_text)
             blocks = []
@@ -53,8 +50,7 @@ class CascadeBlockProcessor:
 
             for e in block_xml.findall('.//system-block'):
                 block_id = e.get('id')
-                block = Block(self.cascade, block_id)
-                block_path = ast.literal_eval(block.read_asset())['asset']['xhtmlDataDefinitionBlock']['path']
+                block_path = e.find('path').text
                 if any([path in block_path for path in paths_to_ignore]):
                     continue
                 result = self.process_block(block_id)
@@ -62,6 +58,22 @@ class CascadeBlockProcessor:
                 yield result + "\n"
                 time.sleep(time_to_wait)
             yield "\nAll blocks have been synced."
+            if send_email_after:
+                # compare hashes to SQL
+                self.check_hashes()
+
+                caps_gs = [MISSING_DATA_MESSAGE + "<br/>"]
+                if len(self.missing):
+                    for code in self.missing:
+                        # will there be a 2- for some reason outside of a code?
+                        if '2-' in code:
+                            caps_gs.append(code)
+
+                caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
+
+                send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
+                self.cascade.publish(PUBLISHSET_ID, 'publishset')
+                self.create_readers_digest()
 
         return Response(generator(), mimetype='text/json')
 
@@ -71,25 +83,10 @@ class CascadeBlockProcessor:
 
     def process_block_by_id(self, id):
         result = self.process_block(id)
-
-        self.check_hashes()
-
-        if len(self.missing):
-
-            caps_gs = []
-            for code in self.missing:
-                # will there be a 2- for some reason outside of a code?
-                if '2-' in code:
-                    caps_gs.append(code)
-
-            caps_gs.insert(0, MISSING_DATA_MESSAGE + "<br/>")
-            caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
-
-            send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
-
-        self.cascade.publish(PUBLISHSET_ID, 'publishset')
-        self.create_readers_digest()
-        return result  # "%s" % "<br/>".join(self.hashes)
+        # AnnMarie decided that the block should be synced, but not published. Either it will be published with the next
+        # big set, or they can publish it manually. As such, the line below should remain commented out.
+        # self.cascade.publish(PUBLISHSET_ID, 'publishset')
+        return result
 
     def find(self, search_list, key):
         for item in search_list:
@@ -103,24 +100,6 @@ class CascadeBlockProcessor:
                 matches.append(item)
 
         return matches
-
-    def post_process_all(self):
-        # compare hashes to SQL
-        self.check_hashes()
-        caps_gs = []
-        if len(self.missing):
-            for code in self.missing:
-                # will there be a 2- for some reason outside of a code?
-                if '2-' in code:
-                    caps_gs.append(code)
-
-        caps_gs.insert(0, MISSING_DATA_MESSAGE + "<br/>")
-        caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
-
-        send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
-
-        self.cascade.publish(PUBLISHSET_ID, 'publishset')
-        self.create_readers_digest()
 
     def create_readers_digest(self):
         '''
@@ -168,7 +147,7 @@ class CascadeBlockProcessor:
         program_block = Block(self.cascade, block_id)
         block_data = json.loads(program_block.read_asset())
         # Dates don't edit well
-        my_path =  block_data['asset']['xhtmlDataDefinitionBlock']['path']
+        my_path = block_data['asset']['xhtmlDataDefinitionBlock']['path']
         for key in block_data['asset']['xhtmlDataDefinitionBlock'].keys():
             if key.endswith('Date'):
                 del block_data['asset']['xhtmlDataDefinitionBlock'][key]
@@ -235,7 +214,7 @@ class CascadeBlockProcessor:
 
                 # add a new detail for each row in the SQL result set.
                 if len(cohort_details) <= j:
-                    # Its going to be immediality overwritten by the new SQL row so it doesn't matter which node
+                    # Its going to be immediately overwritten by the new SQL row so it doesn't matter which node
                     banner_info.append(copy.deepcopy(cohort_details[0]))
                     # re-populate the list with the new item added so we can select it
                     cohort_details = self.find_all(banner_info, 'cohort_details')
@@ -283,7 +262,7 @@ class CascadeBlockProcessor:
                 self.find(details, 'semester_start')['text'] = term
                 self.find(details, 'year_start')['text'] = year
 
-            # consider 0 a good value as the first row in enumarate has j=0
+            # consider 0 a good value as the first row in enumerate has j=0
             if j is None:
                 self.missing.append(
                     """ %s (%s) """ % (block_properties['name'],  concentration_code)
@@ -313,7 +292,7 @@ class AdultProgramsView(FlaskView):
         time_interval = float(time_interval)
         if send_email:
             self.send_email = True
-        return self.cbp.process_all_blocks(time_interval)
+        return self.cbp.process_all_blocks(time_interval, self.send_email)
 
     @route("/sync-one-id/<identifier>")
     def sync_one_id(self, identifier):
@@ -322,12 +301,6 @@ class AdultProgramsView(FlaskView):
     @route("/sync-one-path/<path:path>")
     def sync_one_path(self, path):
         return self.cbp.process_block_by_path(path)
-
-    # This after request needs to be here because it would need to send an email AFTER the return statement of sync_all
-    def after_request(self, name, response):
-        if self.send_email:
-            self.cbp.post_process_all()
-        return response
 
 
 AdultProgramsView.register(app)
