@@ -5,7 +5,6 @@ from config import RECIPIENTS, CAPS_GS_RECIPIENTS, BCC
 
 def send_message(subject, body, html=False, caps_gs=False):
     from sync import app
-    # with app.app_context():
 
     mail = Mail(app)
 

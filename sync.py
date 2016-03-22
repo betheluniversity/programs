@@ -73,8 +73,8 @@ class CascadeBlockProcessor:
                                 caps_gs.append(code)
 
                     caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
-
-                    send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
+                    if len(caps_gs) > 2:  # Only send an email to the CAPS/GS contacts if there's an errant block
+                        send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
                     self.cascade.publish(PUBLISHSET_ID, 'publishset')
                     self.create_readers_digest()
 
