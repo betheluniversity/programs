@@ -38,44 +38,45 @@ class CascadeBlockProcessor:
         # It should be noted that this only streams to Chrome; Firefox tries to download the JS as a file.
 
         def generator():
-            yield "Beginning sync of all blocks\n\n"
-            r = requests.get(XML_URL)
-            # Process the r.text to find the errant, non-ASCII characters
-            safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
-            block_xml = ET.fromstring(safe_text)
-            blocks = []
+            with app.app_context():
+                yield "Beginning sync of all blocks\n\n"
+                r = requests.get(XML_URL)
+                # Process the r.text to find the errant, non-ASCII characters
+                safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
+                block_xml = ET.fromstring(safe_text)
+                blocks = []
 
-            # Any blocks that begin with any of these paths will NOT by synced by this method
-            paths_to_ignore = ["_shared-content/program-blocks/undergrad", "_shared-content/program-blocks/seminary"]
+                # Any blocks that begin with any of these paths will NOT by synced by this method
+                paths_to_ignore = ["_shared-content/program-blocks/undergrad", "_shared-content/program-blocks/seminary"]
 
-            for e in block_xml.findall('.//system-block'):
-                block_id = e.get('id')
-                block_path = e.find('path').text
-                if any([path in block_path for path in paths_to_ignore]):
-                    continue
-                block = Block(self.cascade, block_id)
-                # read_asset returns a string version of a python dict. todo, move this to connector
-                result = self.process_block(block_id)
-                blocks.append(result)
-                yield result + "\n"
-                time.sleep(time_to_wait)
-            yield "\nAll blocks have been synced."
-            if send_email_after:
-                # compare hashes to SQL
-                self.check_hashes()
+                for e in block_xml.findall('.//system-block'):
+                    block_id = e.get('id')
+                    block_path = e.find('path').text
+                    if any([path in block_path for path in paths_to_ignore]):
+                        continue
+                    block = Block(self.cascade, block_id)
+                    # read_asset returns a string version of a python dict. todo, move this to connector
+                    result = self.process_block(block_id)
+                    blocks.append(result)
+                    yield result + "\n"
+                    time.sleep(time_to_wait)
+                yield "\nAll blocks have been synced."
+                if send_email_after:
+                    # compare hashes to SQL
+                    self.check_hashes()
 
-                caps_gs = [MISSING_DATA_MESSAGE + "<br/>"]
-                if len(self.missing):
-                    for code in self.missing:
-                        # will there be a 2- for some reason outside of a code?
-                        if '2-' in code:
-                            caps_gs.append(code)
+                    caps_gs = [MISSING_DATA_MESSAGE + "<br/>"]
+                    if len(self.missing):
+                        for code in self.missing:
+                            # will there be a 2- for some reason outside of a code?
+                            if '2-' in code:
+                                caps_gs.append(code)
 
-                caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
+                    caps_gs.append("<br/>If you have any questions, please email web-services@bethel.edu.")
 
-                send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
-                self.cascade.publish(PUBLISHSET_ID, 'publishset')
-                self.create_readers_digest()
+                    send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs), html=True, caps_gs=True)
+                    self.cascade.publish(PUBLISHSET_ID, 'publishset')
+                    self.create_readers_digest()
 
         return Response(generator(), mimetype='text/json')
 
