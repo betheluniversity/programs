@@ -50,11 +50,5 @@
             <input type="button" value="Sync one block by path" onclick="sync_one_path(document.getElementById('oneSync').value)"/>
         </form><br/><br/>
         <div id="output"></div>
-        <script>
-            var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
-            if(!is_chrome){
-                document.getElementById('output').innerHTML = "If you want to stream the live results of the all-sync, please use Chrome";
-            }
-        </script>
     </body>
 </html>

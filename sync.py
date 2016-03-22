@@ -38,7 +38,8 @@ class CascadeBlockProcessor:
         # It should be noted that this only streams to Chrome; Firefox tries to download the JS as a file.
 
         def generator():
-            yield "Beginning sync of all blocks\n\n"
+            newline = "<br/>"
+            yield "Beginning sync of all blocks" + newline*2
             r = requests.get(XML_URL)
             # Process the r.text to find the errant, non-ASCII characters
             safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
@@ -57,9 +58,9 @@ class CascadeBlockProcessor:
                 # read_asset returns a string version of a python dict. todo, move this to connector
                 result = self.process_block(block_id)
                 blocks.append(result)
-                yield result + "\n"
+                yield result + newline
                 time.sleep(time_to_wait)
-            yield "\nAll blocks have been synced."
+            yield newline + "All blocks have been synced."
             if send_email_after:
                 # compare hashes to SQL
                 self.check_hashes()
@@ -77,7 +78,7 @@ class CascadeBlockProcessor:
                 self.cascade.publish(PUBLISHSET_ID, 'publishset')
                 self.create_readers_digest()
 
-        return Response(stream_with_context(generator()), mimetype='text/json')
+        return Response(stream_with_context(generator()))  # , mimetype='text/json')
 
     def process_block_by_path(self, path):
         block_id = ast.literal_eval(Block(self.cascade, "/"+path).read_asset())['asset']['xhtmlDataDefinitionBlock']['id']
