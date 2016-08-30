@@ -12,6 +12,7 @@ delivery_descriptions = {
     'F': "You'll meet during the evening at one of our convenient locations.",
     'FE': "You'll meet during the evening at one of our convenient locations.",
     'FD': "You'll meet during the day at one of our convenient locations.",
+    'OW': "You'll complete coursework online, with 1-2 weekends on campus each year.",
 }
 
 labels = {
@@ -21,6 +22,7 @@ labels = {
     'HL': 'Blended',
     'F2': 'Face to Face',
     'OO': 'Online',
+    'OW': 'Online',
     'F': 'Face to Face',
     'HH': 'Blended',
     'FE': 'Face to Face',
@@ -31,6 +33,7 @@ subheadings = {
     'O': 'Fully Online',
     'OO': 'Mostly Online',
     'OI': 'Online with Intensives',
+    'OW': 'Online with Weekends',
     'H': '',
     'HL': '',
     'HH': '',
