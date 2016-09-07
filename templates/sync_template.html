@@ -42,16 +42,13 @@
             <label for="secToWait">Number of seconds to wait between each sync:</label><input type="text" id="secToWait" size="4"/><br/>
             <input type="button" value="Sync all blocks, don't send email" onclick="sync_all(document.getElementById('secToWait').value, false)">
             <input type="button" value="Sync all blocks, then send email" onclick="sync_all(document.getElementById('secToWait').value, true)"><br/><br/>
+
+            <p>If you choose to sync just one block, it will not be published automatically. You can either wait for it to be published with the next
+            group, or you can publish it manually.</p>
             <label for="idToSync">ID or path of the block you want to sync right now:</label><input type="text" id="oneSync" size="40"/><br/>
             <input type="button" value="Sync one block by id" onclick="sync_one_id(document.getElementById('oneSync').value)"/>
             <input type="button" value="Sync one block by path" onclick="sync_one_path(document.getElementById('oneSync').value)"/>
         </form><br/><br/>
         <div id="output"></div>
-        <script>
-            var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
-            if(!is_chrome){
-                document.getElementById('output').innerHTML = "If you want to stream the live results of the all-sync, please use Chrome";
-            }
-        </script>
     </body>
 </html>

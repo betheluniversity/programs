@@ -1,13 +1,9 @@
-__author__ = 'ejc84332'
-
 import socket
-
 from flask.ext.mail import Mail, Message
-
 from config import RECIPIENTS, CAPS_GS_RECIPIENTS, BCC
 
-def send_message(subject, body, html=False, caps_gs=False):
 
+def send_message(subject, body, html=False, caps_gs=False):
     from sync import app
 
     mail = Mail(app)
