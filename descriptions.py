@@ -49,6 +49,7 @@ locations = {
     'SP': 'St. Paul',
     'AH': 'Arden Hills',
     'PT': 'Pine Tree',
+    '2PT': 'Anderson Center',
     'RF': 'Red Fox',
     'SD': 'San Diego',
     'NOR': 'Bloomington',
