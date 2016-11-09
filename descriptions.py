@@ -37,10 +37,10 @@ subheadings = {
     'H': 'Blended',
     'HL': 'Partially Online',
     'HH': 'Mostly Online',
-    'F': 'Evening',
-    'F2': 'Evening',
-    'FE': 'Evening',
-    'FD': 'Daytime',
+    'F': 'Face to Face Evening',
+    'F2': 'Face to Face Evening',
+    'FE': 'Face to Face Evening',
+    'FD': 'Face to Face Daytime',
 }
 
 
