@@ -5,7 +5,7 @@ delivery_descriptions = {
     'HL': "Courses will be a mix of online and face to face sessions. You'll complete 30-80% of your coursework online.",
     'H': "Courses will be a mix of online and face to face sessions. You'll complete 30-80% of your coursework online.",
     'HH': "Courses will be a mix of online and face to face sessions. You'll complete 30-80% of your coursework online.",
-    'OI': "You'll complete coursework online, with 1-2 week on-campus intensives each year.",
+    'OI': "You'll complete coursework online, with 1 week of on-campus intensives each year.",
     'F2': "You'll meet for classes at one of our convenient locations.",
     'O': "You'll complete 100% of your coursework online.",
     'OO': "You'll complete over 80% of your coursework online.",
