@@ -256,7 +256,7 @@ class CascadeBlockProcessor:
                     self.missing_locations.append(row['location'])
 
                 if delivery_code in ['O', 'OO']:
-                    location = ''
+                    location = 'Online'
 
                 self.find(details, 'location')['text'] = location
 
