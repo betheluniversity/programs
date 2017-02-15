@@ -1,0 +1,20 @@
+body {
+    padding: 0;
+}
+
+.banner {
+	background-color: #0f2c52;
+	padding: 2em 1em;
+    margin-bottom: 1em;
+}
+
+.btn {
+    background-color: #0069AA;
+    color: white;
+    margin-bottom: 5px
+}
+
+.btn:hover {
+    text-decoration: underline!important;
+    cursor: pointer;
+}
