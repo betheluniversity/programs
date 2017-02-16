@@ -44,23 +44,23 @@
     </head>
     <body>
         <section class="banner">
-            <img class="logo" src="">
+            <img class="logo" src="/static/assets/img/logo-cmssync.png">
         </section>
         <form>
             <div class="container">
                 <div class="form-group row">
-                    <label for="secToWait" class="col-7 col-form-label">Number of seconds to wait between each sync:</label>
-                    <div class="col-5">
+                    <label for="secToWait" class="col-6 col-form-label">Number of seconds to wait between each sync:</label>
+                    <div class="col-6">
                         <input type="text" class="form-control" id="secToWait"/>
                     </div>
                 </div>
                 <input type="button" class="btn" value="Sync all blocks, don't send email" onclick="sync_all(document.getElementById('secToWait').value, false)">
                 <input type="button" class="btn" value="Sync all blocks, then send email" onclick="sync_all(document.getElementById('secToWait').value, true)">
-                <p>If you choose to sync just one block, it will not be published automatically. You can either wait for it to be published with the next
+                <p style="margin-top:10px">If you choose to sync just one block, it will not be published automatically. You can either wait for it to be published with the next
                 group, or you can publish it manually.</p>
                 <div class="form-group row">
-                    <label for="idToSync" class="col-7 col-form-label">ID or path of the block you want to sync right now:</label>
-                    <div class="col-5">
+                    <label for="idToSync" class="col-6 col-form-label">ID or path of the block you want to sync right now:</label>
+                    <div class="col-6">
                         <input type="text" class="form-control" id="oneSync" size="40"/>
                     </div>
                 </div>

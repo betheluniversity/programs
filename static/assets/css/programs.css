@@ -4,7 +4,7 @@ body {
 
 .banner {
 	background-color: #0f2c52;
-	padding: 2em 1em;
+	padding: .7em 1em;
     margin-bottom: 1em;
 }
 
@@ -17,4 +17,9 @@ body {
 .btn:hover {
     text-decoration: underline!important;
     cursor: pointer;
+}
+
+img.logo {
+	width: 235px;
+    height: 38px;
 }
