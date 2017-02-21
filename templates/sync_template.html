@@ -16,7 +16,7 @@
                 var send_email = $('#email_checkbox').is(":checked");
 
                 if(timeInterval === ""){
-                    timeInterval = "0.25";
+                    timeInterval = "1";
                 }
                 var url = baseURL + "sync-all/"+timeInterval;
                 if(send_email == true){
@@ -53,7 +53,7 @@
                 <div class="form-group row">
                     <label for="secToWait" class="col-6 col-form-label">Number of seconds to wait between each sync:</label>
                     <div class="col-6">
-                        <input type="text" class="form-control" id="secToWait"/>
+                        <input type="text" class="form-control" id="secToWait" value="1"/>
                     </div>
                 </div>
                 <div class="form-check" style="margin-bottom:15px">
@@ -62,7 +62,6 @@
                     </label>
                 </div>
                 <input type="button" class="btn" value="Sync all blocks" onclick="sync_all(document.getElementById('secToWait').value)">
-{#                <input type="button" class="btn" value="Sync all blocks, then send email" onclick="sync_all(document.getElementById('secToWait').value, true)">#}
                 <hr>
                 <p style="margin-top:10px">If you choose to sync just one block, it will not be published automatically.</p>
                 <div class="form-group row">
