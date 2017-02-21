@@ -12,7 +12,9 @@
         <script>
             var baseURL = "";//https://programs.bethel.edu/
 
-            function sync_all(timeInterval, send_email){
+            function sync_all(timeInterval){
+                var send_email = $('#email_checkbox').is(":checked");
+
                 if(timeInterval === ""){
                     timeInterval = "0.25";
                 }
@@ -54,10 +56,15 @@
                         <input type="text" class="form-control" id="secToWait"/>
                     </div>
                 </div>
-                <input type="button" class="btn" value="Sync all blocks, don't send email" onclick="sync_all(document.getElementById('secToWait').value, false)">
-                <input type="button" class="btn" value="Sync all blocks, then send email" onclick="sync_all(document.getElementById('secToWait').value, true)">
-                <p style="margin-top:10px">If you choose to sync just one block, it will not be published automatically. You can either wait for it to be published with the next
-                group, or you can publish it manually.</p>
+                <div class="form-check" style="margin-bottom:15px">
+                    <label class="form-check-label">
+                        <input id="email_checkbox" type="checkbox" class="form-check-input checkbox" value="">Send email
+                    </label>
+                </div>
+                <input type="button" class="btn" value="Sync all blocks" onclick="sync_all(document.getElementById('secToWait').value)">
+{#                <input type="button" class="btn" value="Sync all blocks, then send email" onclick="sync_all(document.getElementById('secToWait').value, true)">#}
+                <hr>
+                <p style="margin-top:10px">If you choose to sync just one block, it will not be published automatically.</p>
                 <div class="form-group row">
                     <label for="idToSync" class="col-6 col-form-label">ID or path of the block you want to sync right now:</label>
                     <div class="col-6">

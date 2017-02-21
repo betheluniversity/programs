@@ -23,3 +23,7 @@ img.logo {
 	width: 235px;
     height: 38px;
 }
+
+.checkbox {
+    margin-right: .3rem;
+}
