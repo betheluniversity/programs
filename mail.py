@@ -15,7 +15,7 @@ def send_message(subject, body, html=False, caps_gs=False):
         recipients = RECIPIENTS
         bcc = None
     msg = Message(subject=subject,
-                  sender="no-reply@bethel.edu",
+                  sender="web-development@bethel.edu",
                   recipients=recipients,
                   bcc=bcc)
 

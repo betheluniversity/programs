@@ -1,15 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+    <link rel="stylesheet" href="https://cloud.typography.com/6664852/692222/css/fonts.css">
     <head>
         <meta charset="UTF-8">
         <title>CMS sync page</title>
+        <link rel="stylesheet" type="text/css" href="/static/assets/css/programs.css">
+        <link href="/static/assets/css/bootstrap/bootstrap.min.css" rel="stylesheet">
+        <link href="/static/assets/css/bootstrap/bootstrap-reboot.min.css" rel="stylesheet">
+        <link href="/static/assets/css/bootstrap/bootstrap-grid.min.css" rel="stylesheet">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
         <script>
             var baseURL = "";//https://programs.bethel.edu/
 
-            function sync_all(timeInterval, send_email){
+            function sync_all(timeInterval){
+                var send_email = $('#email_checkbox').is(":checked");
+
                 if(timeInterval === ""){
-                    timeInterval = "0.25";
+                    timeInterval = "1";
                 }
                 var url = baseURL + "sync-all/"+timeInterval;
                 if(send_email == true){
@@ -38,17 +45,36 @@
         </script>
     </head>
     <body>
+        <section class="banner">
+            <img class="logo" src="/static/assets/img/logo-cmssync.png">
+        </section>
         <form>
-            <label for="secToWait">Number of seconds to wait between each sync:</label><input type="text" id="secToWait" size="4"/><br/>
-            <input type="button" value="Sync all blocks, don't send email" onclick="sync_all(document.getElementById('secToWait').value, false)">
-            <input type="button" value="Sync all blocks, then send email" onclick="sync_all(document.getElementById('secToWait').value, true)"><br/><br/>
-
-            <p>If you choose to sync just one block, it will not be published automatically. You can either wait for it to be published with the next
-            group, or you can publish it manually.</p>
-            <label for="idToSync">ID or path of the block you want to sync right now:</label><input type="text" id="oneSync" size="40"/><br/>
-            <input type="button" value="Sync one block by id" onclick="sync_one_id(document.getElementById('oneSync').value)"/>
-            <input type="button" value="Sync one block by path" onclick="sync_one_path(document.getElementById('oneSync').value)"/>
-        </form><br/><br/>
+            <div class="container">
+                <div class="form-group row">
+                    <label for="secToWait" class="col-6 col-form-label">Number of seconds to wait between each sync:</label>
+                    <div class="col-6">
+                        <input type="text" class="form-control" id="secToWait" value="1"/>
+                    </div>
+                </div>
+                <div class="form-check" style="margin-bottom:15px">
+                    <label class="form-check-label">
+                        <input id="email_checkbox" type="checkbox" class="form-check-input checkbox" value="">Send email
+                    </label>
+                </div>
+                <input type="button" class="btn" value="Sync all blocks" onclick="sync_all(document.getElementById('secToWait').value)">
+                <hr>
+                <p style="margin-top:10px">If you choose to sync just one block, it will not be published automatically.</p>
+                <div class="form-group row">
+                    <label for="idToSync" class="col-6 col-form-label">ID or path of the block you want to sync right now:</label>
+                    <div class="col-6">
+                        <input type="text" class="form-control" id="oneSync" size="40"/>
+                    </div>
+                </div>
+                    <input type="button" class="btn" value="Sync one block by id" onclick="sync_one_id(document.getElementById('oneSync').value)"/>
+                    <input type="button" class="btn" value="Sync one block by path" onclick="sync_one_path(document.getElementById('oneSync').value)"/>
+            </div>
+        </form>
+        <br/><br/>
         <div id="output"></div>
     </body>
 </html>
