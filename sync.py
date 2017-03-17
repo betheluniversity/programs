@@ -1,5 +1,6 @@
 import ast
 import copy
+import datetime
 import json
 import requests
 import time
@@ -14,6 +15,7 @@ from descriptions import delivery_descriptions, locations, labels, subheadings
 from flask import Flask, render_template, Response, stream_with_context
 from flask.ext.classy import FlaskView, route
 from mail import send_message
+from sqlalchemy.engine.result import RowProxy
 
 
 app = Flask(__name__)
@@ -146,7 +148,6 @@ class CascadeBlockProcessor:
         self.new_hashes = banner_hashes.difference(self.hashes)
 
     def process_block(self, block_id):
-
         program_block = Block(self.cascade, block_id)
         block_data = json.loads(program_block.read_asset())
         # Dates don't edit well
@@ -188,7 +189,7 @@ class CascadeBlockProcessor:
                 continue
 
             # some have courses entered so the index isn't the same. use the last one
-            banner_info = concentration[len(concentration)-1]['structuredDataNodes']['structuredDataNode']
+            banner_info = concentration[len(concentration) - 1]['structuredDataNodes']['structuredDataNode']
 
             # load the data from banner for this code
             data = self.get_data_for_code(concentration_code)
@@ -209,8 +210,24 @@ class CascadeBlockProcessor:
 
             cohort_details = self.find_all(banner_info, 'cohort_details')
 
+            data_copy_list = []
+            for row in data:
+                if isinstance(row, RowProxy):
+                    row_dict = {}
+                    for key in row.keys():
+                        row_dict[key] = row[key]
+
+                    if ';' in row_dict['start_date']:
+                        for start_date in row_dict['start_date'].split(';'):
+                            start_date = start_date.strip() + ';'
+                            local_copy = copy.deepcopy(row_dict)
+                            local_copy['start_date'] = start_date
+                            data_copy_list.append(local_copy)
+                    else:
+                        data_copy_list.append(row_dict)
+
             j = None
-            for j, row in enumerate(data):
+            for j, row in enumerate(data_copy_list):
                 # concentration
                 self.find(banner_info, 'concentration_name')['text'] = row['concentration_name']
                 self.find(banner_info, 'cost')['text'] = "$%s" % row['cost_per_credit']
@@ -260,15 +277,25 @@ class CascadeBlockProcessor:
 
                 self.find(details, 'location')['text'] = location
 
-                # break up 'Fall 2015 - CAPS/GS' to 'Fall' and '2015'
-                term, year = row['start_date'].split(' - ')[0].split(' ')
-                self.find(details, 'semester_start')['text'] = term
-                self.find(details, 'year_start')['text'] = year
+                if ';' in row['start_date']:
+                    # turn '4/17/2017;  05/29/2017; 07/10/2017' into usefulness
+                    calendar = datetime.datetime.strptime(row['start_date'], "%m/%d/%Y;")
+                    calendar = calendar.strftime("%m-%d-%Y")
+                    self.find(details, 'cohort_start_type')['text'] = "Calendar"
+                    self.find(details, 'calendar_start')['text'] = calendar
+                    self.find(details, 'semester_start')['text'] = ""
+                    self.find(details, 'year_start')['text'] = ""
+                else:
+                    # break up 'Fall 2015 - CAPS/GS' to 'Fall' and '2015'
+                    term, year = row['start_date'].split(' - ')[0].split(' ')
+                    self.find(details, 'cohort_start_type')['text'] = "Semester"
+                    self.find(details, 'semester_start')['text'] = term
+                    self.find(details, 'year_start')['text'] = year
 
             # consider 0 a good value as the first row in enumerate has j=0
             if j is None:
                 self.missing.append(
-                    """ %s (%s) """ % (block_properties['name'],  concentration_code)
+                    """ %s (%s) """ % (block_properties['name'], concentration_code)
                 )
             else:
                 # mark the code down as "seen"
