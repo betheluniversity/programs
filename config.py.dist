@@ -9,6 +9,10 @@ WSDL = ""
 AUTH = {'username': '', 'password': ''}
 SITE_ID = ''
 XML_URL = ''
+
+RECIPIENTS = []
+PROCESS_BLOCKS_SKIP_CONCENTRATION_CODES = []  # list of concentration codes to not process
+
 PUBLISHSET_ID = ''
 
 RAVEN_URL = ''
