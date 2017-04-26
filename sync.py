@@ -186,6 +186,8 @@ class CascadeBlockProcessor:
 
             try:
                 concentration_code = concentration[0]['text']
+                if concentration_code in app.config['PROCESS_BLOCKS_SKIP_CONCENTRATION_CODES']:
+                    continue
             except KeyError:
                 continue
 
