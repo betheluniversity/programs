@@ -18,6 +18,8 @@ from flask.ext.classy import FlaskView, route
 from mail import send_message
 from sqlalchemy.engine.result import RowProxy
 
+from manual_cost_per_credits import MANUAL_COST_PER_CREDITS, MISSING_CODES
+
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -159,14 +161,12 @@ class CascadeBlockProcessor:
 
         block_properties = block_data['asset']['xhtmlDataDefinitionBlock']
 
-        structured_data = block_properties['structuredData']
-
-        if structured_data['definitionPath'] != "Blocks/Program":
+        if block_properties['structuredData']['definitionPath'] != "Blocks/Program":
             return my_path + " not in Blocks/Program"
         if 'seminary' in block_properties['path']:
-            return my_path + " does not have 'seminary' in its path"
+            return my_path + " has 'seminary' in its path"
 
-        nodes = structured_data['structuredDataNodes']['structuredDataNode']
+        nodes = block_properties['structuredData']['structuredDataNodes']['structuredDataNode']
 
         # mark the code down as "seen"
         try:
@@ -176,11 +176,8 @@ class CascadeBlockProcessor:
             # not all programs have generic codes -- only concentration codes.
             pass
 
-        for i, concentration_structure in enumerate(nodes):
-
-            # every node after the first is a concentration
-            if i == 0:
-                continue
+        # every node after the first is a concentration
+        for concentration_structure in nodes[1:]:
 
             concentration = concentration_structure['structuredDataNodes']['structuredDataNode']
 
@@ -208,10 +205,9 @@ class CascadeBlockProcessor:
             cohort_details = self.find_all(banner_info, 'cohort_details')
             # down to 1 delivery detail, in case any got removed. Just re-populate them all
             if len(cohort_details) > 1:
-                for entry in range(1, len(cohort_details)):
-                    banner_info.remove(cohort_details[entry])
-
-            cohort_details = self.find_all(banner_info, 'cohort_details')
+                for entry in cohort_details[1:]:
+                    banner_info.remove(entry)
+                cohort_details = self.find_all(banner_info, 'cohort_details')
 
             data_copy_list = []
             for row in data:
@@ -233,9 +229,19 @@ class CascadeBlockProcessor:
             for j, row in enumerate(data_copy_list):
                 # concentration
                 self.find(banner_info, 'concentration_name')['text'] = row['concentration_name']
-                # TODO: At some point in the future, this line will be unnecessary and it will all be done where this
-                # TODO: gets overriden below
-                self.find(banner_info, 'cost')['text'] = "$%s" % row['cost_per_credit']
+
+                if row['cost_per_credit']:
+                    self.find(banner_info, 'cost')['text'] = "$" + str(row['cost_per_credit'])
+                else:
+                    print "Row missing cost per credit:", row
+                    print "Attempting to get manual price per credit"
+                    if row['program_code'] in MANUAL_COST_PER_CREDITS:
+                        print "Code found in MANUAL_COST_PER_CREDITS; using that."
+                        self.find(banner_info, 'cost')['text'] = MANUAL_COST_PER_CREDITS[row['program_code']]
+                    elif row['program_code'] in MISSING_CODES:
+                        print "Code found in MISSING_CODES, so it's ok if it isn't synced"
+                    else:
+                        print "Code not found in either manual list; THIS IS A REALLY BIG PROBLEM!"
 
                 # add a new detail for each row in the SQL result set.
                 if len(cohort_details) <= j:
