@@ -6,3 +6,5 @@ SQLAlchemy
 suds
 Flask-Mail
 raven[flask]
+BeautifulSoup
+cx_Oracle

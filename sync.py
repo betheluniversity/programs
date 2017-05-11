@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 from banner import Banner
 from bu_cascade.assets.block import Block
 from bu_cascade.cascade_connector import Cascade
-from config import WSDL, AUTH, SITE_ID, XML_URL, PUBLISHSET_ID, MISSING_DATA_MESSAGE
+from config import WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID, XML_URL, PUBLISHSET_ID, MISSING_DATA_MESSAGE
 from descriptions import delivery_descriptions, locations, labels, subheadings
 from flask import Flask, render_template, Response, stream_with_context
 from flask.ext.classy import FlaskView, route
@@ -31,7 +31,7 @@ sentry = Sentry(app, dsn=app.config['RAVEN_URL'])
 class CascadeBlockProcessor:
     def __init__(self):
         self.banner = Banner()
-        self.cascade = Cascade(WSDL, AUTH, SITE_ID)
+        self.cascade = Cascade(WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID)
         self.hashes = set()
         # todo: better names
         self.missing = []
@@ -86,7 +86,7 @@ class CascadeBlockProcessor:
         return Response(stream_with_context(generator()))  # , mimetype='text/json')
 
     def process_block_by_path(self, path):
-        block_id = ast.literal_eval(Block(self.cascade, "/"+path).read_asset())['asset']['xhtmlDataDefinitionBlock']['id']
+        block_id = ast.literal_eval(Block(self.cascade, "/"+path).asset)['xhtmlDataDefinitionBlock']['id']
         return self.process_block_by_id(block_id)
 
     def process_block_by_id(self, id):
@@ -152,14 +152,14 @@ class CascadeBlockProcessor:
 
     def process_block(self, block_id):
         program_block = Block(self.cascade, block_id)
-        block_data = json.loads(program_block.read_asset())
+        block_data = program_block.asset
         # Dates don't edit well
-        my_path = block_data['asset']['xhtmlDataDefinitionBlock']['path']
-        for key in block_data['asset']['xhtmlDataDefinitionBlock'].keys():
+        my_path = block_data['xhtmlDataDefinitionBlock']['path']
+        for key in block_data['xhtmlDataDefinitionBlock'].keys():
             if key.endswith('Date'):
-                del block_data['asset']['xhtmlDataDefinitionBlock'][key]
+                del block_data['xhtmlDataDefinitionBlock'][key]
 
-        block_properties = block_data['asset']['xhtmlDataDefinitionBlock']
+        block_properties = block_data['xhtmlDataDefinitionBlock']
 
         if block_properties['structuredData']['definitionPath'] != "Blocks/Program":
             return my_path + " not in Blocks/Program"
@@ -334,7 +334,7 @@ class CascadeBlockProcessor:
                 self.hashes.add(concentration_code)
 
         asset = {
-            'xhtmlDataDefinitionBlock': block_data['asset']['xhtmlDataDefinitionBlock']
+            'xhtmlDataDefinitionBlock': block_data['xhtmlDataDefinitionBlock']
         }
         program_block.edit_asset(asset)
         return my_path + " successfully updated and synced"
