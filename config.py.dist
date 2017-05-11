@@ -8,6 +8,7 @@ ALL_SQL = ""
 WSDL = ""
 AUTH = {'username': '', 'password': ''}
 SITE_ID = ''
+STAGING_DESTINATION_ID = ''
 XML_URL = ''
 
 RECIPIENTS = []
