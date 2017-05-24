@@ -1,6 +1,7 @@
 import ast
 import copy
 import datetime
+from datetime import datetime as DT, timedelta
 import json
 import locale
 import requests
@@ -153,6 +154,8 @@ class CascadeBlockProcessor:
     def process_block(self, block_id):
         program_block = Block(self.cascade, block_id)
         block_data = program_block.asset
+        if isinstance(block_data, tuple):
+            block_data = block_data[0]
         # Dates don't edit well
         my_path = block_data['xhtmlDataDefinitionBlock']['path']
         for key in block_data['xhtmlDataDefinitionBlock'].keys():
@@ -161,7 +164,7 @@ class CascadeBlockProcessor:
 
         block_properties = block_data['xhtmlDataDefinitionBlock']
 
-        if block_properties['structuredData']['definitionPath'] != "Blocks/Program":
+        if block_properties['structuredData']['definitionPath'] not in ["Blocks/Program", "Test/Phil's Block"]:
             return my_path + " not in Blocks/Program"
         if 'seminary' in block_properties['path']:
             return my_path + " has 'seminary' in its path"
@@ -217,11 +220,22 @@ class CascadeBlockProcessor:
                         row_dict[key] = row[key]
 
                     if ';' in row_dict['start_date']:
+                        formats = ["%m/%d/%Y", "%mm/%d/%Y", "%m/%dd/%Y", "%mm/%dd/%Y"]
                         for start_date in row_dict['start_date'].split(';'):
+                            calendar = None
+                            for fmt in formats:
+                                try:
+                                    calendar = DT.strptime(start_date.strip(), fmt)
+                                except ValueError:
+                                    continue
+                            if calendar is None:
+                                continue
                             start_date = start_date.strip() + ';'
-                            local_copy = copy.deepcopy(row_dict)
-                            local_copy['start_date'] = start_date
-                            data_copy_list.append(local_copy)
+                            two_weeks_from_now = datetime.datetime.now() + timedelta(days=14)
+                            if calendar > two_weeks_from_now:
+                                local_copy = copy.deepcopy(row_dict)
+                                local_copy['start_date'] = start_date
+                                data_copy_list.append(local_copy)
                     else:
                         data_copy_list.append(row_dict)
 
