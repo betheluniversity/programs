@@ -20,6 +20,7 @@ from mail import send_message
 from sqlalchemy.engine.result import RowProxy
 
 from manual_cost_per_credits import MANUAL_COST_PER_CREDITS, MISSING_CODES
+from program_codes_to_skip import SKIP_CODES
 
 
 app = Flask(__name__)
@@ -186,7 +187,22 @@ class CascadeBlockProcessor:
 
             try:
                 concentration_code = concentration[0]['text']
-                if concentration_code in app.config['PROCESS_BLOCKS_SKIP_CONCENTRATION_CODES']:
+
+                # load the data from banner for this code
+                data = self.get_data_for_code(concentration_code)
+                if len(data) > 0:
+                    concentration_code_has_data = True
+                else:
+                    concentration_code_has_data = False
+
+                # If the concentration code ('2-MA-COUG' for example) is in the list of programs to skip,
+                # continue iterating over the concentrations in this block
+                if concentration_code in SKIP_CODES:
+                    print "Code '%s' found in skip list; skipping it" % concentration_code
+                    if concentration_code_has_data:
+                        print "Although code '%s' is being skipped, it has data in Banner." % concentration_code
+                    print ""
+
                     continue
             except KeyError:
                 continue
@@ -194,10 +210,8 @@ class CascadeBlockProcessor:
             # some have courses entered so the index isn't the same. use the last one
             banner_info = concentration[len(concentration) - 1]['structuredDataNodes']['structuredDataNode']
 
-            # load the data from banner for this code
-            data = self.get_data_for_code(concentration_code)
-
             if not data:
+                print "No data found for program code %s, even though it's supposed to sync" % concentration_code
                 self.find(banner_info, 'concentration_name')['text'] = ""
                 self.find(banner_info, 'cost')['text'] = ""
                 details = self.find(banner_info, 'cohort_details')['structuredDataNodes']['structuredDataNode']
@@ -256,6 +270,7 @@ class CascadeBlockProcessor:
                         print "Code found in MISSING_CODES, so it's ok if it isn't synced"
                     else:
                         print "Code not found in either manual list; THIS IS A REALLY BIG PROBLEM!"
+                    print ""
 
                 # add a new detail for each row in the SQL result set.
                 if len(cohort_details) <= j:

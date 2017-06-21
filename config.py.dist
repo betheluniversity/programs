@@ -1,19 +1,33 @@
 DB_KEY = 'abc:123'
 
-CON_STRING = """   """
+CON_STRING = ""
+
+
 
 CODE_SQL = ""
+
 ALL_SQL = ""
+
+TABLE_NAME = ""
+
+KEY_COLUMN = ""
+
+MISSING_DATA_MESSAGE = ""
+CAPS_GS_RECIPIENTS = ""
+BCC = ""
 
 WSDL = ""
 AUTH = {'username': '', 'password': ''}
 SITE_ID = ''
 STAGING_DESTINATION_ID = ''
-XML_URL = ''
-
-RECIPIENTS = []
-PROCESS_BLOCKS_SKIP_CONCENTRATION_CODES = []  # list of concentration codes to not process
 
 PUBLISHSET_ID = ''
+
+secret_key = ""
+SECRET_KEY = ""
+
+XML_URL = ''
+
+RECIPIENTS = ['']
 
 RAVEN_URL = ''
