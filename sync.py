@@ -258,19 +258,19 @@ class CascadeBlockProcessor:
                 # concentration
                 self.find(banner_info, 'concentration_name')['text'] = row['concentration_name']
 
-                if row['cost_per_credit']:
-                    self.find(banner_info, 'cost')['text'] = "$" + str(row['cost_per_credit'])
-                else:
-                    print "Row missing cost per credit:", row
-                    print "Attempting to get manual price per credit"
-                    if row['program_code'] in MANUAL_COST_PER_CREDITS:
-                        print "Code found in MANUAL_COST_PER_CREDITS; using that."
-                        self.find(banner_info, 'cost')['text'] = MANUAL_COST_PER_CREDITS[row['program_code']]
-                    elif row['program_code'] in MISSING_CODES:
-                        print "Code found in MISSING_CODES, so it's ok if it isn't synced"
-                    else:
-                        print "Code not found in either manual list; THIS IS A REALLY BIG PROBLEM!"
-                    print ""
+                # if row['cost_per_credit']:
+                #     self.find(banner_info, 'cost')['text'] = "$" + str(row['cost_per_credit'])
+                # else:
+                #     print "Row missing cost per credit:", row
+                #     print "Attempting to get manual price per credit"
+                #     if row['program_code'] in MANUAL_COST_PER_CREDITS:
+                #         print "Code found in MANUAL_COST_PER_CREDITS; using that."
+                #         self.find(banner_info, 'cost')['text'] = MANUAL_COST_PER_CREDITS[row['program_code']]
+                #     elif row['program_code'] in MISSING_CODES:
+                #         print "Code found in MISSING_CODES, so it's ok if it isn't synced"
+                #     else:
+                #         print "Code not found in either manual list; THIS IS A REALLY BIG PROBLEM!"
+                #     print ""
 
                 # add a new detail for each row in the SQL result set.
                 if len(cohort_details) <= j:
@@ -332,26 +332,26 @@ class CascadeBlockProcessor:
                     self.find(details, 'semester_start')['text'] = term
                     self.find(details, 'year_start')['text'] = year
 
-                def format_price_range(int_low, int_high):
-                    locale.setlocale(locale.LC_ALL, 'en_US')
-                    low = locale.format("%d", int_low, grouping=True)
-                    high = locale.format("%d", int_high, grouping=True)
-                    if int_low == int_high:
-                        return "$" + low
-                    else:
-                        return "$" + low + " - " + high
-
-                # Derek said that if there's a min cost, there will also be a max cost. If they're different, then make
-                # it a range. If they're the same, then it's a fixed cost.
-                if row.get("min_cred_cost") and row.get("max_cred_cost"):
-                    min_credit = row.get("min_cred_cost")
-                    max_credit = row.get("max_cred_cost")
-                    self.find(banner_info, 'cost')['text'] = format_price_range(min_credit, max_credit)
-
-                if row.get("min_prog_cost") and row.get("max_prog_cost"):
-                    min_program = row.get("min_prog_cost")
-                    max_program = row.get("max_prog_cost")
-                    self.find(banner_info, 'concentration_cost')['text'] = format_price_range(min_program, max_program)
+                # def format_price_range(int_low, int_high):
+                #     locale.setlocale(locale.LC_ALL, 'en_US')
+                #     low = locale.format("%d", int_low, grouping=True)
+                #     high = locale.format("%d", int_high, grouping=True)
+                #     if int_low == int_high:
+                #         return "$" + low
+                #     else:
+                #         return "$" + low + " - " + high
+                #
+                # # Derek said that if there's a min cost, there will also be a max cost. If they're different, then make
+                # # it a range. If they're the same, then it's a fixed cost.
+                # if row.get("min_cred_cost") and row.get("max_cred_cost"):
+                #     min_credit = row.get("min_cred_cost")
+                #     max_credit = row.get("max_cred_cost")
+                #     self.find(banner_info, 'cost')['text'] = format_price_range(min_credit, max_credit)
+                #
+                # if row.get("min_prog_cost") and row.get("max_prog_cost"):
+                #     min_program = row.get("min_prog_cost")
+                #     max_program = row.get("max_prog_cost")
+                #     self.find(banner_info, 'concentration_cost')['text'] = format_price_range(min_program, max_program)
 
             # consider 0 a good value as the first row in enumerate has j=0
             if j is None:
