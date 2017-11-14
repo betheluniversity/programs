@@ -212,8 +212,10 @@ class CascadeBlockProcessor:
 
             if not data:
                 print "No data found for program code %s, even though it's supposed to sync" % concentration_code
-                self.find(banner_info, 'concentration_name')['text'] = ""
-                self.find(banner_info, 'cost')['text'] = ""
+                # If data ever does not exist, then this used to clear out the concentration name and cost per credit.
+                # This caused issues because cost per credit has been in limbo and we want to manually set it.
+                # self.find(banner_info, 'concentration_name')['text'] = ""
+                # self.find(banner_info, 'cost')['text'] = ""
                 details = self.find(banner_info, 'cohort_details')['structuredDataNodes']['structuredDataNode']
                 for item in details:
                     item['text'] = ""
