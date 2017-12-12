@@ -1,15 +1,12 @@
 __author__ = 'ejc84332'
-
+# Here is a google doc with all of the descriptions, codes, and whatnot: https://github.com/betheluniversity/programs/blob/master/descriptions.py
 
 delivery_descriptions = {
-    'HL': "Courses will be a mix of online and face to face sessions. You'll complete 30-80% of your coursework online.",
-    'H': "Courses will be a mix of online and face to face sessions. You'll complete 30-80% of your coursework online.",
-    'HH': "Courses will be a mix of online and face to face sessions. You'll complete 30-80% of your coursework online.",
+    'HL': "Courses will be a mix of online and face to face sessions. You'll complete over half of your coursework at one of our convenient locations.",
+    'HH': "Courses will be a mix of online and face to face sessions. You'll complete over half of your coursework online.",
     'OI': "You'll complete coursework online, with 1 week of on-campus intensives each year.",
-    'F2': "You'll meet for classes at one of our convenient locations.",
     'O': "You'll complete 100% of your coursework online.",
     'OO': "You'll complete over 80% of your coursework online.",
-    'F': "You'll meet during the evening at one of our convenient locations.",
     'FE': "You'll meet during the evening at one of our convenient locations.",
     'FD': "You'll meet during the day at one of our convenient locations.",
     'OW': "You'll complete coursework online, with 1-2 weekends on campus each year.",
@@ -18,12 +15,9 @@ delivery_descriptions = {
 labels = {
     'O': 'Online',
     'OI': 'Online',
-    'H': 'Blended',
     'HL': 'Blended',
-    'F2': 'Face to Face',
     'OO': 'Online',
     'OW': 'Online',
-    'F': 'Face to Face',
     'HH': 'Blended',
     'FE': 'Face to Face',
     'FD': 'Face to Face',
@@ -34,11 +28,8 @@ subheadings = {
     'OO': 'Mostly Online',
     'OI': 'Online with Intensives',
     'OW': 'Online with Weekends',
-    'H': 'Blended',
     'HL': 'Partially Online',
-    'HH': 'Mostly Online',
-    'F': 'Face to Face Evening',
-    'F2': 'Face to Face Evening',
+    'HH': 'Partially Online',
     'FE': 'Face to Face Evening',
     'FD': 'Face to Face Daytime',
 }
