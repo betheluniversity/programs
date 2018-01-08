@@ -1,6 +1,5 @@
 __author__ = 'ejc84332'
-# Here is a google doc with all of the descriptions, codes, and whatnot: https://github.com/betheluniversity/programs/blob/master/descriptions.py
-
+# Here is a google doc with all of the descriptions, codes, and whatnot: https://docs.google.com/spreadsheets/d/1F-AI5pquoJByprMtsBIKSIvv-WMgZIXJv7aFZS7No3g/edit#gid=0
 delivery_descriptions = {
     'HL': "Courses will be a mix of online and face to face sessions. You'll complete over half of your coursework at one of our convenient locations.",
     'HH': "Courses will be a mix of online and face to face sessions. You'll complete over half of your coursework online.",
