@@ -1,8 +1,8 @@
 bu-cascade
+SQLAlchemy==1.1.15
 Flask
 Flask-Classy
 requests
-SQLAlchemy==1.1.15
 suds
 Flask-Mail
 raven[flask]
