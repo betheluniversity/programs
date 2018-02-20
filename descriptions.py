@@ -5,6 +5,7 @@ delivery_descriptions = {
     'HH': "Courses will be a mix of online and face to face sessions. You'll complete over half of your coursework online.",
     'OI': "You'll complete coursework online, with 1 week of on-campus intensives each year.",
     'O': "You'll complete 100% of your coursework online.",
+    'ON': "You'll complete coursework online, with 1 week of on-campus intensives.",
     'OO': "You'll complete over 80% of your coursework online.",
     'FE': "You'll meet during the evening at one of our convenient locations.",
     'FD': "You'll meet during the day at one of our convenient locations.",
@@ -14,6 +15,7 @@ delivery_descriptions = {
 labels = {
     'O': 'Online',
     'OI': 'Online',
+    'ON': 'Online',
     'HL': 'Blended',
     'OO': 'Online',
     'OW': 'Online',
@@ -26,6 +28,7 @@ subheadings = {
     'O': 'Fully Online',
     'OO': 'Mostly Online',
     'OI': 'Online with Intensives',
+    'ON': 'Online with Intensive',
     'OW': 'Online with Weekends',
     'HL': 'Partially Online',
     'HH': 'Partially Online',
