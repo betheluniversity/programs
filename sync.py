@@ -367,7 +367,12 @@ class CascadeBlockProcessor:
         asset = {
             'xhtmlDataDefinitionBlock': block_data['xhtmlDataDefinitionBlock']
         }
-        program_block.edit_asset(asset)
+        try:
+            program_block.edit_asset(asset)
+        except:
+            sentry.captureException()
+            return my_path + " failed to sync"
+
         return my_path + " successfully updated and synced"
 
 
