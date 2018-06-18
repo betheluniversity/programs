@@ -41,4 +41,4 @@ class Banner():
     def get_program_data(self):
         sql = CODE_SQL
         results = self.execute(sql)
-        return results
+        return [row for row in results]

@@ -39,7 +39,7 @@ class CascadeBlockProcessor:
         self.missing = []
         self.missing_locations = []
         self.new_hashes = set()
-        # self.data = [row for row in self.banner.get_program_data()]
+        # self.data = self.banner.get_program_data()
 
     def process_all_blocks(self, time_to_wait, send_email_after):
         # It should be noted that this only streams to Chrome; Firefox tries to download the JS as a file.
@@ -130,7 +130,7 @@ class CascadeBlockProcessor:
         send_message("Readers Digest: Program Sync", email_body, html=True)
 
     def get_data_for_code(self, code):
-        self_data = [row for row in self.banner.get_program_data()]
+        self_data = self.banner.get_program_data()
         results = []
         # for row in self.data:
         for row in self_data:
@@ -140,7 +140,7 @@ class CascadeBlockProcessor:
 
     def check_hashes(self):
         # data = self.data
-        data = [row for row in self.banner.get_program_data()]
+        data = self.banner.get_program_data()
         banner_hashes = []
         row_data = {}
         for row in data:
