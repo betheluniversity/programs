@@ -26,7 +26,7 @@ class Banner():
 
         constr = CON_STRING % DB_KEY
 
-        engine = sqlalchemy.create_engine(constr, echo=True)
+        engine = sqlalchemy.create_engine(constr, echo=False)
 
         metadata = MetaData(engine)
         session = sessionmaker(bind=engine)()

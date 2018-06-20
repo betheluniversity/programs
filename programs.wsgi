@@ -4,7 +4,6 @@ execfile(activate_this, dict(__file__=activate_this))
 
 import logging, sys
 logging.basicConfig(stream=sys.stderr)
-logging.getLogger('sqlalchemy').setLevel(logging.ERROR)
 
 import sys
 import os
