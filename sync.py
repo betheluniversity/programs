@@ -47,7 +47,7 @@ class CascadeBlockProcessor:
         def generator():
             newline = "<br/>"
             yield "Beginning sync of all blocks" + newline*2
-            r = requests.get(XML_URL)
+            r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
             # Process the r.text to find the errant, non-ASCII characters
             safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
             block_xml = ET.fromstring(safe_text)
