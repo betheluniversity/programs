@@ -88,7 +88,12 @@ class CascadeBlockProcessor:
         return Response(stream_with_context(generator()))  # , mimetype='text/json')
 
     def process_block_by_path(self, path):
-        block_id = ast.literal_eval(Block(self.cascade, "/"+path).asset)['xhtmlDataDefinitionBlock']['id']
+        if path[0] != '/':
+            path = '/' + path
+        try:
+            block_id = Block(self.cascade, path).asset['xhtmlDataDefinitionBlock']['id']
+        except KeyError:
+            return "Failed to process block. Check your path and try again. If it still has issues, contact Web Development."
         return self.process_block_by_id(block_id)
 
     def process_block_by_id(self, id):
