@@ -45,6 +45,7 @@ class CascadeBlockProcessor:
         # It should be noted that this only streams to Chrome; Firefox tries to download the JS as a file.
 
         def generator():
+            time.sleep(time_to_wait)
             newline = "<br/>"
             yield "Beginning sync of all blocks" + newline*2
             r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
@@ -67,6 +68,7 @@ class CascadeBlockProcessor:
                 blocks.append(result)
                 yield result + newline
                 time.sleep(time_to_wait)
+
             yield newline + "All blocks have been synced."
             if send_email_after:
                 # compare hashes to SQL
