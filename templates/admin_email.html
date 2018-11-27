@@ -1,0 +1,19 @@
+{# Codes that are in Cascade, but have no data from Banner #}
+{% if missing_data_codes %}
+    <h2>Missing Data in Banner</h2>
+    <ul>
+        {% for code in missing_data_codes %}
+            <li>{{ code }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{# Codes we got data from Banner, but code doesn't exist in Cascade #}
+{% if unused_banner_codes %}
+    <h2>Unused Banner Codes</h2>
+    <ul>
+        {% for code in unused_banner_codes %}
+            <li>{{ code }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
