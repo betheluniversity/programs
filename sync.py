@@ -91,8 +91,8 @@ class CascadeBlockProcessor:
 
     def get_unused_banner_codes(self):
         unused_banner_codes = []
-        for data in self.data:
-            if data['prog_code'] not in self.codes_found_in_cascade:
+        for index, data in self.data.iteritems():
+            if data['prog_code'] not in self.codes_found_in_cascade and data['prog_code'] not in unused_banner_codes:
                 unused_banner_codes.append(data['prog_code'])
 
         return unused_banner_codes
@@ -151,7 +151,7 @@ class CascadeBlockProcessor:
 
             banner_details_added = 0
             for index, row in self.data.iteritems():
-                if not concentration_code:
+                if row['prog_code'] != concentration_code:
                     continue
 
                 # if you need more banner details, copy more!
