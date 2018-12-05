@@ -29,11 +29,10 @@ class CascadeBlockProcessor:
         self.cascade = Cascade(WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID)
         self.codes_found_in_cascade = []
         self.missing_data_codes = []
-        self.data = {}
 
     def process_all_blocks(self, time_to_wait, send_email_after):
 
-        def generator(time_to_wait, send_email_after):
+        def generator(data, time_to_wait, send_email_after):
             yield "Beginning sync of all blocks" + "<br/><br/>"
             r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
             # Process the r.text to find the errant, non-ASCII characters
@@ -48,7 +47,7 @@ class CascadeBlockProcessor:
                 if any([path in block.find('path').text for path in paths_to_ignore]):
                     continue
 
-                result = self.process_block(block.get('id'))
+                result = self.process_block(data, block.get('id'))
                 blocks.append(result)
                 yield result + "<br/>"
                 time.sleep(time_to_wait)
@@ -64,7 +63,7 @@ class CascadeBlockProcessor:
                 if len(missing_data_codes) > 0:
                     send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs_sem_email), html=True, caps_gs=True)
 
-                unused_banner_codes = self.get_unused_banner_codes()
+                unused_banner_codes = self.get_unused_banner_codes(data)
                 admin_email = render_template("admin_email.html", **locals())
                 send_message("Readers Digest: Program Sync", admin_email, html=True)
 
@@ -72,26 +71,25 @@ class CascadeBlockProcessor:
                 self.codes_found_in_cascade = []
 
         # load the data from banner for this code
-        self.data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
-        return Response(stream_with_context(generator(time_to_wait, send_email_after)), mimetype='text/html')
+        data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
+        return Response(stream_with_context(generator(data, time_to_wait, send_email_after)), mimetype='text/html')
 
+        # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
-        # load the data from banner for this code
-        self.data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
-
         block_id = ast.literal_eval(Block(self.cascade, "/"+path).asset)['xhtmlDataDefinitionBlock']['id']
+
         return self.process_block_by_id(block_id)
 
     def process_block_by_id(self, id):
         # load the data from banner for this code
-        self.data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
+        data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
-        result = self.process_block(id)
+        result = self.process_block(data, id)
         return result
 
-    def get_unused_banner_codes(self):
+    def get_unused_banner_codes(self, data):
         unused_banner_codes = []
-        for index, data in self.data.iteritems():
+        for index, data in data.iteritems():
             if data['prog_code'] not in self.codes_found_in_cascade and data['prog_code'] not in unused_banner_codes:
                 unused_banner_codes.append(data['prog_code'])
 
@@ -113,7 +111,7 @@ class CascadeBlockProcessor:
 
         return True
 
-    def process_block(self, block_id):
+    def process_block(self, data, block_id):
         program_block = Block(self.cascade, block_id)
         block_asset = program_block.asset
 
@@ -150,7 +148,7 @@ class CascadeBlockProcessor:
             #######################################################################################
 
             banner_details_added = 0
-            for index, row in self.data.iteritems():
+            for index, row in data.iteritems():
                 if row['prog_code'] != concentration_code:
                     continue
 
@@ -242,6 +240,7 @@ if __name__ == "__main__":
 
 
 # Legacy cost per credit code
+# I kept this in hear, in case this ever gets added back in (caleb)
     # if row['cost_per_credit']:
     #     self.find(banner_info, 'cost')['text'] = "$" + str(row['cost_per_credit'])
     # else:
