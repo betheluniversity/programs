@@ -163,7 +163,8 @@ class CascadeBlockProcessor:
                     new_cohort = copy.deepcopy(old_cohort)
                     find(concentration, 'concentration_banner', False).append(new_cohort)
 
-                # set the new cohort details - if we get a list from bu_cascade, get the first element?
+                # set the new cohort details - if we get a list from bu_cascade, get the last element
+                # The last element is the one we most recently added
                 new_cohort_details = find(concentration, 'cohort_details')
                 if isinstance(new_cohort_details, list):
                     new_cohort_details = new_cohort_details[-1]
@@ -172,12 +173,11 @@ class CascadeBlockProcessor:
                 for to_clear in new_cohort_details['structuredDataNodes']['structuredDataNode']:
                     to_clear['text'] = ''
 
+                # start dates or dynamic. Derek Sends us "000000" to denote that
                 if row['start_term_code'] == u'000000':
-                    # start dates (or dynamic)
                     update(new_cohort_details, 'cohort_start_type', "Dynamic")
                     update(new_cohort_details, 'dynamic_start_text', row['start_term_desc'])
-                else:
-                    # semester
+                else:  # semester
                     update(new_cohort_details, 'cohort_start_type', "Semester")
                     update(new_cohort_details, 'semester_start', row['start_term_short_label'])
                     update(new_cohort_details, 'year_start', row['start_term_year_label'])
