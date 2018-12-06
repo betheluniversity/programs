@@ -174,6 +174,11 @@ class CascadeBlockProcessor:
                 # start dates or dynamic. Derek Sends us "000000" to denote that
                 if row['start_term_code'] == u'000000':
                     update(new_cohort_details, 'cohort_start_type', "Dynamic")
+
+                    # if we can't find a "dynamic_start_text", then we will have to manually add the dict in
+                    if not find(new_cohort_details, 'dynamic_start_text'):
+                        new_cohort_details['structuredDataNodes']['structuredDataNode'].append(
+                            {'type': 'text', 'identifier': 'dynamic_start_text', 'text': ''})
                     update(new_cohort_details, 'dynamic_start_text', row['start_term_desc'])
                 else:  # semester
                     update(new_cohort_details, 'cohort_start_type', "Semester")
@@ -240,7 +245,7 @@ if __name__ == "__main__":
 
 
 # Legacy cost per credit code
-# I kept this in hear, in case this ever gets added back in (caleb)
+# I kept this in here, in case this ever gets added back in (caleb)
     # if row['cost_per_credit']:
     #     self.find(banner_info, 'cost')['text'] = "$" + str(row['cost_per_credit'])
     # else:
