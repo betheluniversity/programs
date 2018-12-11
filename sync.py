@@ -30,10 +30,10 @@ class CascadeBlockProcessor:
         self.codes_found_in_cascade = []
         self.missing_data_codes = []
 
-    def process_all_blocks(self, time_to_wait, send_email_after, running_as_cron):
+    def process_all_blocks(self, time_to_wait, send_email_after, yield_output):
 
-        def generator(data, time_to_wait, send_email_after, running_as_cron):
-            if not running_as_cron:
+        def generator(data, time_to_wait, send_email_after, yield_output):
+            if yield_output:
                 yield "Beginning sync of all blocks" + "<br/><br/>"
             r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
             # Process the r.text to find the errant, non-ASCII characters
@@ -50,10 +50,10 @@ class CascadeBlockProcessor:
 
                 result = self.process_block(data, block.get('id'))
                 blocks.append(result)
-                if not running_as_cron:
+                if yield_output:
                     yield result + "<br/>"
                 time.sleep(time_to_wait)
-            if not running_as_cron:
+            if yield_output:
                 yield "<br/>All blocks have been synced."
 
             # todo: don't publish for testing. When this goes live, add this line back in
@@ -77,10 +77,10 @@ class CascadeBlockProcessor:
         wsapi_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
         # only yield/generator when not running as cron
-        if running_as_cron:
-            return Response(generator(wsapi_data, time_to_wait, send_email_after, running_as_cron), mimetype='text/html')
+        if yield_output:
+            return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output)), mimetype='text/html')
         else:
-            return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, running_as_cron)), mimetype='text/html')
+            return Response(generator(wsapi_data, time_to_wait, send_email_after, yield_output), mimetype='text/html')
 
         # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
@@ -229,11 +229,11 @@ class AdultProgramsView(FlaskView):
 
     @route("/sync-all/<time_interval>")
     @route("/sync-all/<time_interval>/<send_email>")
-    @route("/sync-all/<time_interval>/<send_email>/<running_as_cron>")
-    def sync_all(self, time_interval, send_email=False, running_as_cron=False):
+    @route("/sync-all/<time_interval>/<send_email>/<yield_output>")
+    def sync_all(self, time_interval, send_email=False, yield_output=True):
         time_interval = float(time_interval)
 
-        return self.cbp.process_all_blocks(time_interval, send_email, running_as_cron)
+        return self.cbp.process_all_blocks(time_interval, send_email, yield_output)
 
     @route("/sync-one-id/<identifier>")
     def sync_one_id(self, identifier):
