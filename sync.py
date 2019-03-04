@@ -48,7 +48,8 @@ class CascadeBlockProcessor:
                 if any([path in block.find('path').text for path in paths_to_ignore]):
                     continue
 
-                result = self.process_block(data, block.get('id'))
+                block_id = block.get('id')
+                result = self.process_block(data, block_id)
                 blocks.append(result)
                 if yield_output:
                     yield result + "<br/>"
@@ -126,6 +127,9 @@ class CascadeBlockProcessor:
         block_path = find(block_asset, 'path', False)
         if find(block_asset, 'definitionPath', False) != "Blocks/Program":
             return block_path + " not in Blocks/Program"
+
+        if block_id in app.config['SKIP_CONCENTRATION_CODES']:
+            return block_path + " is currently being skipped."
 
         # gather concentrations
         concentrations = find(program_block.structured_data, 'concentration')
