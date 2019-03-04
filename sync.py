@@ -68,6 +68,7 @@ class CascadeBlockProcessor:
                     send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs_sem_email), html=True, caps_gs=True)
 
                 unused_banner_codes = self.get_unused_banner_codes(data)
+                caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
                 admin_email = render_template("admin_email.html", **locals())
                 send_message("Readers Digest: Program Sync", admin_email, html=True)
 
@@ -96,6 +97,7 @@ class CascadeBlockProcessor:
         result = self.process_block(data, id)
         return result
 
+    # we gather unused banner codes to send report emails after the sync
     def get_unused_banner_codes(self, data):
         unused_banner_codes = []
         for index, data in data.iteritems():
@@ -128,6 +130,7 @@ class CascadeBlockProcessor:
         if find(block_asset, 'definitionPath', False) != "Blocks/Program":
             return block_path + " not in Blocks/Program"
 
+        # todo: this might not be used anymore. Need to talk with Emily
         if block_id in app.config['SKIP_CONCENTRATION_CODES']:
             return block_path + " is currently being skipped."
 

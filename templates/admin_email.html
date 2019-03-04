@@ -1,6 +1,7 @@
 {# Codes that are in Cascade, but have no data from Banner #}
 {% if missing_data_codes %}
     <h2>Missing Data in Banner</h2>
+    <p>An email containing these same codes have been sent to {{ caps_gs_sem_recipients }}</p>
     <ul>
         {% for code in missing_data_codes %}
             <li>{{ code }}</li>
