@@ -84,7 +84,13 @@ class CascadeBlockProcessor:
 
         # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
-        block_id = ast.literal_eval(Block(self.cascade, "/"+path).asset)['xhtmlDataDefinitionBlock']['id']
+
+        if path[0] != '/':
+            path = '/' + path
+        try:
+            block_id = ast.literal_eval(Block(self.cascade, path).asset)['xhtmlDataDefinitionBlock']['id']
+        except KeyError:
+            return "Failed to process block. Check your path and try again. If it still has issues, contact Web Development."
 
         return self.process_block_by_id(block_id)
 

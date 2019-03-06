@@ -33,6 +33,11 @@
             }
 
             function sync_one_path(path){
+                // remove all leading slashes.
+                while( path[0] == '/' ){
+                    path = path.substring(1);
+                }
+
                 var url = baseURL + "sync-one-path/"+path;
                 $.ajax(url, {
                     success: output
