@@ -13,7 +13,6 @@ from flask import Flask, render_template, Response, stream_with_context
 from flask.ext.classy import FlaskView, route
 from mail import send_message
 
-from program_codes_to_skip import SKIP_CODES
 from config import WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID, XML_URL, PUBLISHSET_ID
 
 
@@ -40,8 +39,7 @@ class CascadeBlockProcessor:
             safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
             block_xml = ET.fromstring(safe_text)
 
-            # todo: the 2nd one can be deleted when we launch
-            paths_to_ignore = ["_shared-content/program-blocks/undergrad", "_shared-content/program-blocks-test/undergrad"]
+            paths_to_ignore = ["_shared-content/program-blocks/undergrad"]
 
             blocks = []
             for block in block_xml.findall('.//system-block'):
@@ -57,8 +55,8 @@ class CascadeBlockProcessor:
             if yield_output:
                 yield "<br/>All blocks have been synced."
 
-            # todo: don't publish for testing. When this goes live, add this line back in
-            # self.cascade.publish(PUBLISHSET_ID, 'publishset')
+            # publish out
+            self.cascade.publish(PUBLISHSET_ID, 'publishset')
 
             if send_email_after:
                 missing_data_codes = self.missing_data_codes
@@ -123,6 +121,7 @@ class CascadeBlockProcessor:
         return True
 
     def process_block(self, data, block_id):
+
         program_block = Block(self.cascade, block_id)
         block_asset = program_block.asset
 
@@ -130,7 +129,6 @@ class CascadeBlockProcessor:
         if find(block_asset, 'definitionPath', False) != "Blocks/Program":
             return block_path + " not in Blocks/Program"
 
-        # todo: this might not be used anymore. Need to talk with Emily
         if block_id in app.config['SKIP_CONCENTRATION_CODES']:
             return block_path + " is currently being skipped."
 
@@ -142,9 +140,8 @@ class CascadeBlockProcessor:
         for concentration in concentrations:
             concentration_code = find(concentration, 'concentration_code', False)
 
-            if concentration_code in SKIP_CODES:
-                print "Code '%s' found in skip list; skipping it" % concentration_code
-                continue
+            if concentration_code == '4-MA-CF-P-I':
+                pass
 
             self.delete_and_clear_cohort_details(concentration)
 
@@ -219,7 +216,8 @@ class CascadeBlockProcessor:
                 # mark the code down as "seen"
                 self.codes_found_in_cascade.append(concentration_code)
         try:
-            program_block.edit_asset(block_asset)
+            pass
+            # program_block.edit_asset(block_asset)
         except:
             sentry.captureException()
             return block_path + " failed to sync"
