@@ -60,7 +60,7 @@ class CascadeBlockProcessor:
 
                 caps_gs_sem_email = render_template("caps_gs_sem_recipients_email.html", **locals())
                 if len(missing_data_codes) > 0:
-                    send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs_sem_email), html=True, caps_gs=True)
+                    send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs_sem_email), html=True, caps_gs_sem=True)
 
                 unused_banner_codes = self.get_unused_banner_codes(data)
                 caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
