@@ -101,6 +101,7 @@ class CascadeBlockProcessor:
         for index, data in data.iteritems():
             if data['prog_code'] not in self.codes_found_in_cascade and data['prog_code'] not in unused_banner_codes:
                 unused_banner_codes.append(data['prog_code'])
+                print data['prog_code']
 
         return unused_banner_codes
 
@@ -216,8 +217,7 @@ class CascadeBlockProcessor:
                 # mark the code down as "seen"
                 self.codes_found_in_cascade.append(concentration_code)
         try:
-            pass
-            # program_block.edit_asset(block_asset)
+            program_block.edit_asset(block_asset)
         except:
             sentry.captureException()
             return block_path + " failed to sync"
