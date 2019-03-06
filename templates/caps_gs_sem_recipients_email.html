@@ -1,0 +1,13 @@
+<p>The following program codes no longer have banner data associated with them. The live websites now have a message about no cohorts being scheduled. Please address these immediately.</p>
+
+{# Codes that are in Cascade, but have no data from Banner #}
+{% if missing_data_codes %}
+    <h2>Missing Data in Banner</h2>
+    <ul>
+        {% for code in missing_data_codes %}
+            <li>{{ code }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<p>If you have any questions, please email web-services@bethel.edu.</p>
