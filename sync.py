@@ -55,9 +55,6 @@ class CascadeBlockProcessor:
             if yield_output:
                 yield "<br/>All blocks have been synced."
 
-            # publish out
-            self.cascade.publish(PUBLISHSET_ID, 'publishset')
-
             if send_email_after:
                 missing_data_codes = self.missing_data_codes
 
@@ -84,13 +81,7 @@ class CascadeBlockProcessor:
 
         # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
-
-        if path[0] != '/':
-            path = '/' + path
-        try:
-            block_id = ast.literal_eval(Block(self.cascade, path).asset)['xhtmlDataDefinitionBlock']['id']
-        except KeyError:
-            return "Failed to process block. Check your path and try again. If it still has issues, contact Web Development."
+        block_id = ast.literal_eval(Block(self.cascade, "/"+path).asset)['xhtmlDataDefinitionBlock']['id']
 
         return self.process_block_by_id(block_id)
 
@@ -147,12 +138,9 @@ class CascadeBlockProcessor:
         for concentration in concentrations:
             concentration_code = find(concentration, 'concentration_code', False)
 
-            if concentration_code == '4-MA-CF-P-I':
-                pass
-
             self.delete_and_clear_cohort_details(concentration)
 
-            # todo: remove this after launch
+            # todo: remove this after launch - specifically, once these fields are removed.
             ##################### Code to be used until after we launch! ##########################
             update(concentration, 'override-cohort-details', 'No')
             counter = 0
@@ -222,6 +210,21 @@ class CascadeBlockProcessor:
             else:
                 # mark the code down as "seen"
                 self.codes_found_in_cascade.append(concentration_code)
+
+        if not app.config['DEVELOPMENT']:
+            try:
+                # we are getting the concentration path and publishing out the applicable program details folder and program
+                # index page.
+                concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
+                program_folder = '/' + concentration_page_path[:concentration_page_path.find("program-details")]
+                # 1) publish the program-details folder
+                self.cascade.publish(program_folder + 'program-details', 'folder')
+
+                # 2) publish the program index
+                self.cascade.publish(program_folder + 'index', 'page')
+            except:
+                sentry.captureException()
+
         try:
             program_block.edit_asset(block_asset)
         except:
