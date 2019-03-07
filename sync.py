@@ -58,14 +58,14 @@ class CascadeBlockProcessor:
             if send_email_after:
                 missing_data_codes = self.missing_data_codes
 
-                caps_gs_sem_email = render_template("caps_gs_sem_recipients_email.html", **locals())
+                caps_gs_sem_email_content = render_template("caps_gs_sem_recipients_email.html", **locals())
                 if len(missing_data_codes) > 0:
-                    send_message("No CAPS/GS Banner Data Found", "<br/>".join(caps_gs_sem_email), html=True, caps_gs_sem=True)
+                    send_message("No CAPS/GS Banner Data Found", caps_gs_sem_email_content, html=True, caps_gs_sem=True)
 
                 unused_banner_codes = self.get_unused_banner_codes(data)
                 caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
-                admin_email = render_template("admin_email.html", **locals())
-                send_message("Readers Digest: Program Sync", "<br/>".join(admin_email), html=True)
+                admin_email_content = render_template("admin_email.html", **locals())
+                send_message("Readers Digest: Program Sync", admin_email_content, html=True)
 
                 # reset the codes found
                 self.codes_found_in_cascade = []
