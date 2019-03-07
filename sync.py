@@ -246,6 +246,8 @@ class AdultProgramsView(FlaskView):
     @route("/sync-all/<time_interval>/<send_email>/<yield_output>")
     def sync_all(self, time_interval, send_email=False, yield_output=True):
         time_interval = float(time_interval)
+        send_email = bool(send_email)
+        yield_output = bool(yield_output)
 
         return self.cbp.process_all_blocks(time_interval, send_email, yield_output)
 
