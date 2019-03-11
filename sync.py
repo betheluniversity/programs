@@ -189,8 +189,8 @@ class CascadeBlockProcessor:
                     update(new_cohort_details, 'dynamic_start_text', row['start_term_desc'])
                 else:  # semester
                     update(new_cohort_details, 'cohort_start_type', "Semester")
-                    update(new_cohort_details, 'semester_start', row['start_term_short_label'])
-                    update(new_cohort_details, 'year_start', row['start_term_year_label'])
+                    update(new_cohort_details, 'semester_start', row['start_term_short_label'].strip())
+                    update(new_cohort_details, 'year_start', row['start_term_year_label'].strip())
 
                 # add data
                 update(new_cohort_details, 'delivery_description', row['delivery_desc'])
