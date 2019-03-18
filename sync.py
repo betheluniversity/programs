@@ -32,7 +32,7 @@ class CascadeBlockProcessor:
 
     def process_all_blocks(self, time_to_wait, send_email_after, yield_output):
         f = open("/opt/programs/programs/test.txt", "a")
-        f.write("Start Sync: %s" % datetime.datetime.now())
+        f.write("%s: Start Sync" % datetime.datetime.now())
 
         def generator(data, time_to_wait, send_email_after, yield_output, f):
             if yield_output:
@@ -50,19 +50,19 @@ class CascadeBlockProcessor:
                     continue
 
                 block_id = block.get('id')
-                f.write("Block %s: %s" % (block_id, datetime.datetime.now()))
+                f.write("%s: Block %s" % (datetime.datetime.now(), block_id))
                 result = self.process_block(data, block_id)
                 blocks.append(result)
                 if yield_output:
                     yield result + "<br/>"
                 time.sleep(time_to_wait)
 
-            f.write("Finish Sync: %s" % datetime.datetime.now())
+            f.write("%s: Finish Sync" % datetime.datetime.now())
             if yield_output:
                 yield "<br/>All blocks have been synced."
 
             if send_email_after:
-                f.write("Start Send Email: %s" % datetime.datetime.now())
+                f.write("%s: Start Send Email" % datetime.datetime.now())
                 missing_data_codes = self.missing_data_codes
 
                 caps_gs_sem_email_content = render_template("caps_gs_sem_recipients_email.html", **locals())
@@ -76,7 +76,7 @@ class CascadeBlockProcessor:
 
                 # reset the codes found
                 self.codes_found_in_cascade = []
-                f.write("After Send Email: %s" % datetime.datetime.now())
+                f.write("%s: After Send Email" % datetime.datetime.now())
 
         # load the data from banner for this code
         wsapi_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
