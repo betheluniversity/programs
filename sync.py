@@ -1,5 +1,6 @@
 import ast
 import copy
+import datetime
 import json
 import requests
 import time
@@ -30,8 +31,10 @@ class CascadeBlockProcessor:
         self.missing_data_codes = []
 
     def process_all_blocks(self, time_to_wait, send_email_after, yield_output):
+        f = open("/opt/programs/programs/test.txt", "a")
+        f.write("Start Sync: %s" % datetime.datetime.now())
 
-        def generator(data, time_to_wait, send_email_after, yield_output):
+        def generator(data, time_to_wait, send_email_after, yield_output, f):
             if yield_output:
                 yield "Beginning sync of all blocks" + "<br/><br/>"
             r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
@@ -47,15 +50,19 @@ class CascadeBlockProcessor:
                     continue
 
                 block_id = block.get('id')
+                f.write("Block %s: %s" % (block_id, datetime.datetime.now()))
                 result = self.process_block(data, block_id)
                 blocks.append(result)
                 if yield_output:
                     yield result + "<br/>"
                 time.sleep(time_to_wait)
+
+            f.write("Finish Sync: %s" % datetime.datetime.now())
             if yield_output:
                 yield "<br/>All blocks have been synced."
 
             if send_email_after:
+                f.write("Start Send Email: %s" % datetime.datetime.now())
                 missing_data_codes = self.missing_data_codes
 
                 caps_gs_sem_email_content = render_template("caps_gs_sem_recipients_email.html", **locals())
@@ -69,15 +76,16 @@ class CascadeBlockProcessor:
 
                 # reset the codes found
                 self.codes_found_in_cascade = []
+                f.write("After Send Email: %s" % datetime.datetime.now())
 
         # load the data from banner for this code
         wsapi_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
         # only yield/generator when not running as cron
         if yield_output:
-            return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output)), mimetype='text/html')
+            return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output, f)), mimetype='text/html')
         else:
-            return Response(generator(wsapi_data, time_to_wait, send_email_after, yield_output), mimetype='text/html')
+            return Response(generator(wsapi_data, time_to_wait, send_email_after, yield_output, f), mimetype='text/html')
 
         # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
