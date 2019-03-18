@@ -31,10 +31,10 @@ class CascadeBlockProcessor:
         self.missing_data_codes = []
 
     def process_all_blocks(self, time_to_wait, send_email_after, yield_output):
-        f = open("/opt/programs/programs/test.txt", "a")
-        f.write("%s: Start Sync" % datetime.datetime.now())
+        with open('/opt/programs/programs/test.txt', 'a') as the_file:
+            the_file.write('%s: Start Sync' % datetime.datetime.now())
 
-        def generator(data, time_to_wait, send_email_after, yield_output, f):
+        def generator(data, time_to_wait, send_email_after, yield_output):
             if yield_output:
                 yield "Beginning sync of all blocks" + "<br/><br/>"
             r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
@@ -50,19 +50,23 @@ class CascadeBlockProcessor:
                     continue
 
                 block_id = block.get('id')
-                f.write("%s: Block %s" % (datetime.datetime.now(), block_id))
+
+                with open('/opt/programs/programs/test.txt', 'a') as the_file:
+                    the_file.write("%s: Block %s" % (datetime.datetime.now(), block_id))
                 result = self.process_block(data, block_id)
                 blocks.append(result)
                 if yield_output:
                     yield result + "<br/>"
                 time.sleep(time_to_wait)
 
-            f.write("%s: Finish Sync" % datetime.datetime.now())
+            with open('/opt/programs/programs/test.txt', 'a') as the_file:
+                the_file.write("%s: Finish Sync" % datetime.datetime.now())
             if yield_output:
                 yield "<br/>All blocks have been synced."
 
             if send_email_after:
-                f.write("%s: Start Send Email" % datetime.datetime.now())
+                with open('/opt/programs/programs/test.txt', 'a') as the_file:
+                    the_file.write("%s: Start Send Email" % datetime.datetime.now())
                 missing_data_codes = self.missing_data_codes
 
                 caps_gs_sem_email_content = render_template("caps_gs_sem_recipients_email.html", **locals())
@@ -76,16 +80,17 @@ class CascadeBlockProcessor:
 
                 # reset the codes found
                 self.codes_found_in_cascade = []
-                f.write("%s: After Send Email" % datetime.datetime.now())
+                with open('/opt/programs/programs/test.txt', 'a') as the_file:
+                    the_file.write("%s: After Send Email" % datetime.datetime.now())
 
         # load the data from banner for this code
         wsapi_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
         # only yield/generator when not running as cron
         if yield_output:
-            return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output, f)), mimetype='text/html')
+            return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output)), mimetype='text/html')
         else:
-            return Response(generator(wsapi_data, time_to_wait, send_email_after, yield_output, f), mimetype='text/html')
+            return Response(generator(wsapi_data, time_to_wait, send_email_after, yield_output), mimetype='text/html')
 
         # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
