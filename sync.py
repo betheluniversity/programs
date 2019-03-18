@@ -32,7 +32,7 @@ class CascadeBlockProcessor:
 
     def process_all_blocks(self, time_to_wait, send_email_after, yield_output):
         with open('/opt/programs/programs/test.txt', 'a') as the_file:
-            the_file.write('%s: Start Sync' % datetime.datetime.now())
+            the_file.write('%s: Start Sync\n' % datetime.datetime.now())
 
         def generator(data, time_to_wait, send_email_after, yield_output):
             if yield_output:
@@ -52,7 +52,7 @@ class CascadeBlockProcessor:
                 block_id = block.get('id')
 
                 with open('/opt/programs/programs/test.txt', 'a') as the_file:
-                    the_file.write("%s: Block %s" % (datetime.datetime.now(), block_id))
+                    the_file.write("%s: Block %s\n" % (datetime.datetime.now(), block_id))
                 result = self.process_block(data, block_id)
                 blocks.append(result)
                 if yield_output:
@@ -60,13 +60,13 @@ class CascadeBlockProcessor:
                 time.sleep(time_to_wait)
 
             with open('/opt/programs/programs/test.txt', 'a') as the_file:
-                the_file.write("%s: Finish Sync" % datetime.datetime.now())
+                the_file.write("%s: Finish Sync\n" % datetime.datetime.now())
             if yield_output:
                 yield "<br/>All blocks have been synced."
 
             if send_email_after:
                 with open('/opt/programs/programs/test.txt', 'a') as the_file:
-                    the_file.write("%s: Start Send Email" % datetime.datetime.now())
+                    the_file.write("%s: Start Send Email\n" % datetime.datetime.now())
                 missing_data_codes = self.missing_data_codes
 
                 caps_gs_sem_email_content = render_template("caps_gs_sem_recipients_email.html", **locals())
@@ -81,7 +81,7 @@ class CascadeBlockProcessor:
                 # reset the codes found
                 self.codes_found_in_cascade = []
                 with open('/opt/programs/programs/test.txt', 'a') as the_file:
-                    the_file.write("%s: After Send Email" % datetime.datetime.now())
+                    the_file.write("%s: After Send Email\n" % datetime.datetime.now())
 
         # load the data from banner for this code
         wsapi_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
