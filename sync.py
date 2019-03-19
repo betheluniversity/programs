@@ -51,8 +51,6 @@ class CascadeBlockProcessor:
 
                 block_id = block.get('id')
 
-                with open('/opt/programs/programs/test.txt', 'a') as the_file:
-                    the_file.write("%s: Block %s\n" % (datetime.datetime.now(), block_id))
                 result = self.process_block(data, block_id)
                 blocks.append(result)
                 if yield_output:
@@ -133,6 +131,8 @@ class CascadeBlockProcessor:
 
     def process_block(self, data, block_id):
 
+        with open('/opt/programs/programs/test.txt', 'a') as the_file:
+            the_file.write("%s: Start sync on block %s\n" % (datetime.datetime.now(), block_id))
         program_block = Block(self.cascade, block_id)
         block_asset = program_block.asset
 
@@ -224,8 +224,15 @@ class CascadeBlockProcessor:
             except:
                 sentry.captureException()
 
+
+        with open('/opt/programs/programs/test.txt', 'a') as the_file:
+            the_file.write("%s: Final step of sync on block %s\n" % (datetime.datetime.now(), block_id))
+
         try:
             program_block.edit_asset(block_asset)
+
+            with open('/opt/programs/programs/test.txt', 'a') as the_file:
+                the_file.write("%s: Edit on block %s\n" % (datetime.datetime.now(), block_id))
         except:
             sentry.captureException()
             return block_path + " failed to sync"
