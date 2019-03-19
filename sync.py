@@ -37,60 +37,62 @@ class CascadeBlockProcessor:
         # load the data from banner for this code
         wsapi_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
-        # def test(data, time_to_wait, send_email_after, yield_output):
-        # if yield_output:
-        #     yield "Beginning sync of all blocks" + "<br/><br/>"
-        r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
-        # Process the r.text to find the errant, non-ASCII characters
-        safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
-        block_xml = ET.fromstring(safe_text)
+        def generator(data, time_to_wait, send_email_after, yield_output):
+            if yield_output:
+                yield "Beginning sync of all blocks" + "<br/><br/>"
+            r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
+            # Process the r.text to find the errant, non-ASCII characters
+            safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
+            block_xml = ET.fromstring(safe_text)
 
-        paths_to_ignore = ["_shared-content/program-blocks/undergrad"]
+            paths_to_ignore = ["_shared-content/program-blocks/undergrad"]
 
-        blocks = []
-        for block in block_xml.findall('.//system-block'):
-            if any([path in block.find('path').text for path in paths_to_ignore]):
-                continue
+            blocks = []
+            for block in block_xml.findall('.//system-block'):
+                if any([path in block.find('path').text for path in paths_to_ignore]):
+                    continue
 
-            block_id = block.get('id')
+                block_id = block.get('id')
 
-            result = self.process_block(wsapi_data, block_id)
-            blocks.append(result)
-            # if yield_output:
-            #     yield result + "<br/>"
-            time.sleep(time_to_wait)
+                result = self.process_block(wsapi_data, block_id)
+                blocks.append(result)
+                if yield_output:
+                    yield result + "<br/>"
+                time.sleep(time_to_wait)
 
-        with open('/opt/programs/programs/test.txt', 'a') as the_file:
-            the_file.write("%s: Finish Sync\n" % datetime.datetime.now())
-        # if yield_output:
-        #     yield "<br/>All blocks have been synced."
-
-        if send_email_after:
             with open('/opt/programs/programs/test.txt', 'a') as the_file:
-                the_file.write("%s: Start Send Email\n" % datetime.datetime.now())
-            missing_data_codes = self.missing_data_codes
+                the_file.write("%s: Finish Sync\n" % datetime.datetime.now())
+            if yield_output:
+                yield "<br/>All blocks have been synced."
 
-            caps_gs_sem_email_content = render_template("caps_gs_sem_recipients_email.html", **locals())
-            if len(missing_data_codes) > 0:
-                send_message("No CAPS/GS Banner Data Found", caps_gs_sem_email_content, html=True, caps_gs_sem=True)
+            if send_email_after:
+                with open('/opt/programs/programs/test.txt', 'a') as the_file:
+                    the_file.write("%s: Start Send Email\n" % datetime.datetime.now())
+                missing_data_codes = self.missing_data_codes
 
-            unused_banner_codes = self.get_unused_banner_codes(wsapi_data)
-            caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
-            admin_email_content = render_template("admin_email.html", **locals())
-            send_message("Readers Digest: Program Sync", admin_email_content, html=True)
+                caps_gs_sem_email_content = render_template("caps_gs_sem_recipients_email.html", **locals())
+                if len(missing_data_codes) > 0:
+                    send_message("No CAPS/GS Banner Data Found", caps_gs_sem_email_content, html=True, caps_gs_sem=True)
 
-            # reset the codes found
-            self.codes_found_in_cascade = []
-            with open('/opt/programs/programs/test.txt', 'a') as the_file:
-                the_file.write("%s: After Send Email\n" % datetime.datetime.now())
+                unused_banner_codes = self.get_unused_banner_codes(wsapi_data)
+                caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
+                admin_email_content = render_template("admin_email.html", **locals())
+                send_message("Readers Digest: Program Sync", admin_email_content, html=True)
+
+                # reset the codes found
+                self.codes_found_in_cascade = []
+                with open('/opt/programs/programs/test.txt', 'a') as the_file:
+                    the_file.write("%s: After Send Email\n" % datetime.datetime.now())
 
         # only yield/generator when not running as cron
-        # if yield_output:
-        #     return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output)), mimetype='text/html')
-        # else:
-        #     return generator(wsapi_data, time_to_wait, send_email_after, yield_output)
-
-        return 'done'
+        if yield_output:
+            with open('/opt/programs/programs/test.txt', 'a') as the_file:
+                the_file.write("%s: Yield output\n" % datetime.datetime.now())
+            return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output)), mimetype='text/html')
+        else:
+            with open('/opt/programs/programs/test.txt', 'a') as the_file:
+                the_file.write("%s: Don't Yield output\n" % datetime.datetime.now())
+            return generator(wsapi_data, time_to_wait, send_email_after, yield_output)
 
         # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
