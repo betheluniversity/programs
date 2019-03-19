@@ -153,20 +153,6 @@ class CascadeBlockProcessor:
 
             self.delete_and_clear_cohort_details(concentration)
 
-            # todo: remove this after launch - specifically, once these fields are removed.
-            ##################### Code to be used until after we launch! ##########################
-            update(concentration, 'override-cohort-details', 'No')
-            counter = 0
-            for element in concentration['structuredDataNodes']['structuredDataNode']:
-                if element['identifier'] == 'new-cohort-details-group':
-                    for to_clear in element['structuredDataNodes']['structuredDataNode']:
-                        to_clear['text'] = ''
-                    del concentration['structuredDataNodes']['structuredDataNode'][counter]
-                    # we have to subtract from the counter because indexes are off when we remove
-                    counter -= 1
-                counter += 1
-            #######################################################################################
-
             banner_details_added = 0
             for index, row in data.iteritems():
                 if row['prog_code'] != concentration_code:
