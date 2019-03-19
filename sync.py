@@ -34,7 +34,7 @@ class CascadeBlockProcessor:
         with open('/opt/programs/programs/test.txt', 'a') as the_file:
             the_file.write('%s: Start Sync\n' % datetime.datetime.now())
 
-        def generator(data, time_to_wait, send_email_after, yield_output):
+        def test(data, time_to_wait, send_email_after, yield_output):
             if yield_output:
                 yield "Beginning sync of all blocks" + "<br/><br/>"
             r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
@@ -85,10 +85,10 @@ class CascadeBlockProcessor:
         wsapi_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
         # only yield/generator when not running as cron
-        if yield_output:
-            return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output)), mimetype='text/html')
-        else:
-            return generator(wsapi_data, time_to_wait, send_email_after, yield_output)
+        # if yield_output:
+        #     return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output)), mimetype='text/html')
+        # else:
+        return test(wsapi_data, time_to_wait, send_email_after, yield_output)
 
         # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
