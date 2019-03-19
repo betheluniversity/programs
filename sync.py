@@ -270,10 +270,6 @@ class AdultProgramsView(FlaskView):
 AdultProgramsView.register(app)
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
-
-
 # Legacy cost per credit code
 # I kept this in here, in case this ever gets added back in (caleb)
     # if row['cost_per_credit']:
