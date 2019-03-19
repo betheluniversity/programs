@@ -88,7 +88,7 @@ class CascadeBlockProcessor:
         if yield_output:
             return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output)), mimetype='text/html')
         else:
-            return Response(generator(wsapi_data, time_to_wait, send_email_after, yield_output), mimetype='text/html')
+            return generator(wsapi_data, time_to_wait, send_email_after, yield_output)
 
         # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
