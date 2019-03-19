@@ -84,7 +84,6 @@ class CascadeBlockProcessor:
             with open('/opt/programs/programs/test.txt', 'a') as the_file:
                 the_file.write("%s: After Send Email\n" % datetime.datetime.now())
 
-        return "done"
         # only yield/generator when not running as cron
         # if yield_output:
         #     return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output)), mimetype='text/html')
