@@ -84,6 +84,7 @@ class CascadeBlockProcessor:
             with open('/opt/programs/programs/test.txt', 'a') as the_file:
                 the_file.write("%s: After Send Email\n" % datetime.datetime.now())
 
+        return "done"
         # only yield/generator when not running as cron
         # if yield_output:
         #     return Response(stream_with_context(generator(wsapi_data, time_to_wait, send_email_after, yield_output)), mimetype='text/html')
@@ -91,6 +92,7 @@ class CascadeBlockProcessor:
         #     return Response(generator(wsapi_data, time_to_wait, send_email_after, yield_output), mimetype='text/html')
 
         # this method just passes through to process_block_by_id
+
     def process_block_by_path(self, path):
         block_id = ast.literal_eval(Block(self.cascade, "/"+path).asset)['xhtmlDataDefinitionBlock']['id']
 
