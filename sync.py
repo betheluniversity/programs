@@ -47,6 +47,9 @@ class CascadeBlockProcessor:
 
             with open('/opt/programs/programs/test.txt', 'a') as the_file:
                 the_file.write("%s: Block %s\n" % (datetime.datetime.now(), block_id))
+
+            if block_id == 'bf3a31458c5865130ff33d42f793d6ce':
+                continue
             result = self.process_block(wsapi_data, block_id)
             blocks.append(result)
             time.sleep(time_to_wait)
@@ -244,14 +247,8 @@ class CascadeBlockProcessor:
             except:
                 sentry.captureException()
 
-        with open('/opt/programs/programs/test.txt', 'a') as the_file:
-            the_file.write("%s: Final step of sync on block %s\n" % (datetime.datetime.now(), block_id))
-
         try:
             program_block.edit_asset(block_asset)
-
-            with open('/opt/programs/programs/test.txt', 'a') as the_file:
-                the_file.write("%s: Edit on block %s\n" % (datetime.datetime.now(), block_id))
         except:
             sentry.captureException()
             return block_path + " failed to sync"
