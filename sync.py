@@ -63,50 +63,10 @@ class CascadeBlockProcessor:
 
             # reset the codes found
             self.codes_found_in_cascade = []
+            
+        return "Finished sync of all CAPS/GS/SEM programs."
 
-    # def process_all_blocks_generator(self, wsapi_data, time_to_wait, send_email_after, yield_output):
-    #     if yield_output:
-    #         yield "Beginning sync of all blocks" + "<br/><br/>"
-    #     r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
-    #     # Process the r.text to find the errant, non-ASCII characters
-    #     safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
-    #     block_xml = ET.fromstring(safe_text)
-    #
-    #     paths_to_ignore = ["_shared-content/program-blocks/undergrad"]
-    #
-    #     blocks = []
-    #     for block in block_xml.findall('.//system-block'):
-    #         if any([path in block.find('path').text for path in paths_to_ignore]):
-    #             continue
-    #
-    #         block_id = block.get('id')
-    #
-    #         result = self.process_block(wsapi_data, block_id)
-    #         blocks.append(result)
-    #         if yield_output:
-    #             yield result + "<br/>"
-    #         time.sleep(time_to_wait)
-    #
-    #     if yield_output:
-    #         yield "<br/>All blocks have been synced."
-    #
-    #     if send_email_after:
-    #         missing_data_codes = self.missing_data_codes
-    #
-    #         caps_gs_sem_email_content = render_template("caps_gs_sem_recipients_email.html", **locals())
-    #         if len(missing_data_codes) > 0:
-    #             send_message("No CAPS/GS Banner Data Found", caps_gs_sem_email_content, html=True,
-    #                          caps_gs_sem=True)
-    #
-    #         unused_banner_codes = self.get_unused_banner_codes(wsapi_data)
-    #         caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
-    #         admin_email_content = render_template("admin_email.html", **locals())
-    #         send_message("Readers Digest: Program Sync", admin_email_content, html=True)
-    #
-    #         # reset the codes found
-    #         self.codes_found_in_cascade = []
-
-        # this method just passes through to process_block_by_id
+    # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
         block_id = ast.literal_eval(Block(self.cascade, "/"+path).asset)['xhtmlDataDefinitionBlock']['id']
 
@@ -264,11 +224,6 @@ class AdultProgramsView(FlaskView):
         # load the data from banner for this code
         wsapi_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
-        # only yield/generator when not running as cron
-        # if yield_output:
-        #     return Response(stream_with_context(self.cbp.process_all_blocks_generator(wsapi_data, time_interval, send_email, yield_output)),
-        #                     mimetype='text/html')
-        # else:
         return self.cbp.process_all_blocks(wsapi_data, time_interval, send_email, yield_output)
 
     @route("/sync-one-id/<identifier>")
