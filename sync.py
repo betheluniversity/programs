@@ -30,7 +30,7 @@ class CascadeBlockProcessor:
         self.codes_found_in_cascade = []
         self.missing_data_codes = []
 
-    def process_all_blocks(self, wsapi_data, time_to_wait, send_email_after, yield_output):
+    def process_all_blocks(self, wsapi_data, time_to_wait, send_email_after):
         r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
         # Process the r.text to find the errant, non-ASCII characters
         safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
@@ -215,16 +215,14 @@ class AdultProgramsView(FlaskView):
 
     @route("/sync-all/<time_interval>")
     @route("/sync-all/<time_interval>/<send_email>")
-    @route("/sync-all/<time_interval>/<send_email>/<yield_output>")
-    def sync_all(self, time_interval, send_email=False, yield_output=True):
+    def sync_all(self, time_interval, send_email=False):
         time_interval = float(time_interval)
         send_email = bool(send_email)
-        yield_output = bool(yield_output)
 
         # load the data from banner for this code
         wsapi_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
-        return self.cbp.process_all_blocks(wsapi_data, time_interval, send_email, yield_output)
+        return self.cbp.process_all_blocks(wsapi_data, time_interval, send_email)
 
     @route("/sync-one-id/<identifier>")
     def sync_one_id(self, identifier):
