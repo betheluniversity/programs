@@ -1,6 +1,6 @@
 import socket
 from flask.ext.mail import Mail, Message
-from config import ADMIN_RECIPIENTS, CAPS_GS_SEM_RECIPIENTS, BCC
+from config import ADMIN_RECIPIENTS, CAPS_GS_SEM_RECIPIENTS
 
 
 def send_message(subject, body, html=False, caps_gs_sem=False):
@@ -10,14 +10,11 @@ def send_message(subject, body, html=False, caps_gs_sem=False):
 
     if caps_gs_sem:
         recipients = CAPS_GS_SEM_RECIPIENTS
-        bcc = BCC
     else:
         recipients = ADMIN_RECIPIENTS
-        bcc = None
     msg = Message(subject=subject,
                   sender="web-development@bethel.edu",
-                  recipients=recipients,
-                  bcc=bcc)
+                  recipients=recipients)
 
     if html:
         msg.html = body
