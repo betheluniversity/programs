@@ -127,7 +127,7 @@ class CascadeBlockProcessor:
             self.delete_and_clear_cohort_details(concentration)
 
             banner_details_added = 0
-            for index, row in data.iteritems():
+            for row in data:  # removed ".iteritems()", as it was throwing an error.
                 if row['prog_code'] != concentration_code:
                     continue
 
