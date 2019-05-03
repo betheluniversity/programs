@@ -1,29 +1,29 @@
 DB_KEY = 'abc:123'
 
-CON_STRING = ""
+CON_STRING = ''
 
 
-DEVELOPMENT = ""
-CODE_SQL = ""
+DEVELOPMENT = ''
+CODE_SQL = ''
 
-ALL_SQL = ""
+ALL_SQL = ''
 
-TABLE_NAME = ""
+TABLE_NAME = ''
 
-KEY_COLUMN = ""
+KEY_COLUMN = ''
 
-CAPS_GS_SEM_RECIPIENTS = ""
-BCC = ""
+CAPS_GS_SEM_RECIPIENTS = ''
+BCC = ''
 
-WSDL = ""
+WSDL = ''
 AUTH = {'username': '', 'password': ''}
 SITE_ID = ''
 STAGING_DESTINATION_ID = ''
 
 PUBLISHSET_ID = ''
 
-secret_key = ""
-SECRET_KEY = ""
+secret_key = ''
+SECRET_KEY = ''
 
 XML_URL = ''
 

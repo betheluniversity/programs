@@ -13,7 +13,7 @@ def send_message(subject, body, html=False, caps_gs_sem=False):
     else:
         recipients = ADMIN_RECIPIENTS
     msg = Message(subject=subject,
-                  sender="web-development@bethel.edu",
+                  sender='web-development@bethel.edu',
                   recipients=recipients)
 
     if html:
@@ -24,7 +24,7 @@ def send_message(subject, body, html=False, caps_gs_sem=False):
     try:
         mail.send(msg)
     except socket.error:
-        print "failed to send message %s" % body
+        print 'failed to send message %s' % body
         return False
 
     return True
