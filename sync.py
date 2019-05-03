@@ -78,8 +78,7 @@ class CascadeBlockProcessor:
         # load the data from banner for this code
         data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
-        result = self.process_block(data, id)
-        return result
+        return self.process_block(data, id)
 
     # we gather unused banner codes to send report emails after the sync
     def get_unused_banner_codes(self, data):
@@ -98,11 +97,11 @@ class CascadeBlockProcessor:
                 for to_clear in element['structuredDataNodes']['structuredDataNode']:
                     to_clear['text'] = ''
 
-                # we use a break since we delete the amm down below
+                # we use a break since we delete them all down below
                 break
             counter += 1
 
-        # delete all after the one you exited at
+        # delete all cohort details after the last one iterated in the for loop
         del find(concentration, 'concentration_banner', False)[counter + 1:]
 
         return True
