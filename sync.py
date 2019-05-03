@@ -192,15 +192,16 @@ class CascadeBlockProcessor:
                 concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
                 program_folder = '/' + concentration_page_path[:concentration_page_path.find('program-details')]
                 # 1) publish the program-details folder
-                self.cascade.publish(program_folder + 'program-details', 'folder')
+                # self.cascade.publish(program_folder + 'program-details', 'folder')
 
                 # 2) publish the program index
-                self.cascade.publish(program_folder + 'index', 'page')
+                # self.cascade.publish(program_folder + 'index', 'page')
             except:
                 sentry.captureException()
 
         try:
-            program_block.edit_asset(block_asset)
+            # program_block.edit_asset(block_asset)
+            pass
         except:
             sentry.captureException()
             return block_path + ' failed to sync'
