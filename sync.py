@@ -1,7 +1,9 @@
 # Imports from global Python packages
 import ast
 import copy
+import hashlib
 import json
+import os
 import time
 import unicodedata
 import xml.etree.ElementTree as ET
@@ -32,7 +34,112 @@ class CascadeBlockProcessor:
         self.codes_found_in_cascade = []
         self.missing_data_codes = []
 
-    def process_all_blocks(self, wsapi_data, time_to_wait, send_email_after):
+    def convert_dictionary_to_hash(self, dictionary):
+
+        def _recursively_alphabetize_dictionary_by_keys(dictionary_to_alphabetize):
+            if isinstance(dictionary_to_alphabetize, dict):
+                to_return = '{'
+                ordered_keys = sorted(dictionary_to_alphabetize.keys())
+                for key in ordered_keys:
+                    to_return += "'%s': " % str(key)
+                    value = dictionary_to_alphabetize[key]
+                    if isinstance(value, dict):
+                        to_return += _recursively_alphabetize_dictionary_by_keys(value)
+                    elif isinstance(value, (str, unicode)):
+                        to_return += "'%s'" % str(value)
+                    to_return += ', '
+
+                return to_return + '}'
+            else:
+                return 'Not a dictionary'
+
+        alphabetized_string = _recursively_alphabetize_dictionary_by_keys(dictionary)
+
+        return repr(hashlib.md5(alphabetized_string).digest())
+
+    def get_changed_banner_rows(self):
+        # First, read in dictionary of old {program_codes: md5 hashes} from .csv
+        filepath = '/Users/phg49389/Sites/programs/bannerDataHashes.csv'
+        old_hashes = {}
+        if os.path.isfile(filepath):
+            with open(filepath, 'r') as old_data_hashes:
+                for line in old_data_hashes.readlines():
+                    vals = line.split(',')
+                    old_hashes[vals[0]] = vals[1]
+
+        # Second, read in current values of data from Banner via WSAPI
+        new_banner_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
+
+        # Third, create a dictionary of new {program_codes: (row indexes, md5 hashes)}
+        new_hashes = {}
+        for i in range(len(new_banner_data)):
+            row = new_banner_data[i]
+            new_hashes[row['prog_code']] = (i, self.convert_dictionary_to_hash(row))
+
+        # This is only true on the first run, so the file has to be created
+        if not os.path.isfile(filepath):
+            with open(filepath, 'w+') as new_data_hashes:
+                for program_code in new_hashes.keys():
+                    new_data_hashes.write('%s,%s\n' % (program_code, new_hashes[program_code][1]))
+
+            # Return all rows as "new"
+            return new_banner_data
+
+        # Fourth, check if any md5 hashes in new are different than in old, or if new has md5 hashes that old doesn't
+        # If there are any differences, put the corresponding rows into an array that will eventually be iterated over
+        old_index = 0
+        old_keys = sorted(old_hashes.keys())
+        new_index = 0
+        new_keys = sorted(new_hashes.keys())
+        different_or_new_rows = []
+
+        while old_index < len(old_keys) and new_index < len(new_keys):
+            old_program_code = old_keys[old_index]
+            new_program_code = new_keys[new_index]
+
+            # Is this a program code that was deleted from banner between old and new?
+            if old_program_code < new_program_code:
+                # We don't want to update any rows that were deleted, so increment the old_index and move on
+                old_index += 1
+
+            # Is this a program code that was added to banner between old and new?
+            elif old_program_code > new_program_code:
+                # We want to update Cascade with that new row
+                index_of_new_row = new_hashes[new_program_code][0]
+                different_or_new_rows.append(new_banner_data[index_of_new_row])
+                new_index += 1
+
+            # Is this a program code that old and new both have?
+            else:
+                # Check if the hashes in the two dictionaries have different values
+                old_hash = old_hashes[old_program_code]
+                new_hash = new_hashes[new_program_code][1]
+
+                if old_hash != new_hash:
+                    index_of_changed_row = new_hashes[new_program_code][0]
+                    different_or_new_rows.append(new_banner_data[index_of_changed_row])
+
+                old_index += 1
+                new_index += 1
+
+        # Edge cases: it's possible that the while loop above may end before iterating over all keys in both arrays
+        # We can discard any keys from the old list since they just represent rows of data that were deleted, but
+        # any keys remaining the new list represent rows that have been added between runs
+        for i in range(new_index, len(new_keys)):
+            index_of_new_row = new_hashes[new_keys[i]][0]
+            different_or_new_rows.append(new_banner_data[index_of_new_row])
+
+        # Fifth, write the new dictionary to the .csv
+        with open(filepath, 'w+') as new_data_hashes:
+            for program_code in new_hashes.keys():
+                new_data_hashes.write('%s,%s\n' % (program_code, new_hashes[program_code][1]))
+
+        # Finally, return the array of different rows for use in block processing
+        return different_or_new_rows
+
+    def process_all_blocks(self, time_to_wait, send_email_after):
+        changed_rows = self.get_changed_banner_rows()
+
         r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
         # Process the r.text to find the errant, non-ASCII characters
         safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
@@ -47,7 +154,7 @@ class CascadeBlockProcessor:
 
             block_id = block.get('id')
 
-            result = self.process_block(wsapi_data, block_id)
+            result = self.process_block(changed_rows, block_id)
             blocks.append(result)
             time.sleep(time_to_wait)
 
@@ -58,7 +165,7 @@ class CascadeBlockProcessor:
             if len(missing_data_codes) > 0:
                 send_message('No CAPS/GS Banner Data Found', caps_gs_sem_email_content, html=True, caps_gs_sem=True)
 
-            unused_banner_codes = self.get_unused_banner_codes(wsapi_data)
+            unused_banner_codes = self.get_unused_banner_codes(changed_rows)
             caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
             admin_email_content = render_template('admin_email.html', **locals())
             send_message('Readers Digest: Program Sync', admin_email_content, html=True)
@@ -75,10 +182,9 @@ class CascadeBlockProcessor:
         return self.process_block_by_id(block_id)
 
     def process_block_by_id(self, id):
-        # load the data from banner for this code
-        data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
+        changed_rows = self.get_changed_banner_rows()
 
-        return self.process_block(data, id)
+        return self.process_block(changed_rows, id)
 
     # we gather unused banner codes to send report emails after the sync
     def get_unused_banner_codes(self, data):
@@ -107,6 +213,8 @@ class CascadeBlockProcessor:
         return True
 
     def process_block(self, data, block_id):
+        this_block_had_a_concentration_updated = False
+
         program_block = Block(self.cascade, block_id)
         block_asset = program_block.asset
 
@@ -131,6 +239,8 @@ class CascadeBlockProcessor:
             for row in data:  # removed '.iteritems()', as it was throwing an error.
                 if row['prog_code'] != concentration_code:
                     continue
+
+                this_block_had_a_concentration_updated = True
 
                 # if you need more banner details, copy more!
                 if banner_details_added != 0:
@@ -184,28 +294,31 @@ class CascadeBlockProcessor:
                 # mark the code down as "seen"
                 self.codes_found_in_cascade.append(concentration_code)
 
-        if not app.config['DEVELOPMENT']:
-            try:
-                # we are getting the concentration path and publishing out the applicable
-                # program details folder and program index page.
-                concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
-                program_folder = '/' + concentration_page_path[:concentration_page_path.find('program-details')]
-                # 1) publish the program-details folder
-                # self.cascade.publish(program_folder + 'program-details', 'folder')
+        if this_block_had_a_concentration_updated:
+            if not app.config['DEVELOPMENT']:
+                try:
+                    # we are getting the concentration path and publishing out the applicable
+                    # program details folder and program index page.
+                    concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
+                    program_folder = '/' + concentration_page_path[:concentration_page_path.find('program-details')]
+                    # 1) publish the program-details folder
+                    # self.cascade.publish(program_folder + 'program-details', 'folder')
 
-                # 2) publish the program index
-                # self.cascade.publish(program_folder + 'index', 'page')
+                    # 2) publish the program index
+                    # self.cascade.publish(program_folder + 'index', 'page')
+                except:
+                    sentry.captureException()
+
+            try:
+                # program_block.edit_asset(block_asset)
+                pass
             except:
                 sentry.captureException()
+                return block_path + ' failed to sync'
 
-        try:
-            # program_block.edit_asset(block_asset)
-            pass
-        except:
-            sentry.captureException()
-            return block_path + ' failed to sync'
-
-        return block_path + ' successfully updated and synced'
+            return block_path + ' successfully updated and synced'
+        else:
+            return block_path + " didn't have any data updated in Banner"
 
 
 class AdultProgramsView(FlaskView):
@@ -221,10 +334,7 @@ class AdultProgramsView(FlaskView):
         time_interval = float(time_interval)
         send_email = bool(send_email)
 
-        # load the data from banner for this code
-        wsapi_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
-
-        return self.cbp.process_all_blocks(wsapi_data, time_interval, send_email)
+        return self.cbp.process_all_blocks(time_interval, send_email)
 
     @route('/sync-one-id/<identifier>')
     def sync_one_id(self, identifier):
