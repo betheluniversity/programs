@@ -11,7 +11,7 @@ from bu_cascade.assets.block import Block
 from bu_cascade.cascade_connector import Cascade
 from bu_cascade.asset_tools import find, update
 from flask import Flask, render_template, Response, stream_with_context
-from flask.ext.classy import FlaskView, route
+from flask_classy import FlaskView, route
 from mail import send_message
 
 from config import WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID, XML_URL, PUBLISHSET_ID

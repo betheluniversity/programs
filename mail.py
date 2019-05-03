@@ -1,5 +1,5 @@
 import socket
-from flask.ext.mail import Mail, Message
+from flask_mail import Mail, Message
 from config import ADMIN_RECIPIENTS, CAPS_GS_SEM_RECIPIENTS
 
 
