@@ -157,7 +157,7 @@ class CascadeBlockProcessor:
         # We can discard any keys from the old list since they just represent rows of data that were deleted, but
         # any keys remaining the new list represent rows that have been inserted between runs
         for i in range(new_index, len(new_keys)):
-            new_key = new_keys[new_index]
+            new_key = new_keys[i]
             new_row_index = int(new_key.split('__')[2])
             different_or_new_rows.append(new_banner_data[new_row_index])
 
