@@ -3,7 +3,6 @@ import ast
 import copy
 import hashlib
 import json
-import math
 import os
 import time
 import unicodedata
@@ -78,17 +77,7 @@ class CascadeBlockProcessor:
         # Second, read in current values of data from Banner via WSAPI
         # These are sorted twice in WSAPI: first by prog_code, and then sub-sorted by start_term_code
         new_banner_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
-        # Sourced from: https://stackoverflow.com/a/16839304
-        data_len_magnitude = int(math.log10(len(new_banner_data)))
-
-        def _leftpad_index(index, mag):
-            if index == 0:
-                # Can't take the log of 0
-                index_magnitude = 0
-            else:
-                # Take in an integer i, and left-pad zeroes until it has as many decimal places as specified by "mag"
-                index_magnitude = int(math.log10(index))
-            return '0' * (mag - index_magnitude) + str(index)
+        num_decimal_places = len(str(len(new_banner_data)))
 
         # Third, create a dictionary of new md5 hashes, each stored at a 3-part key:
         # prog_code, start_term_code, and row index
@@ -99,7 +88,7 @@ class CascadeBlockProcessor:
             # Convert values from unicode to string
             distinct_program_codes.add(str(row['prog_code']))
             # Have to left-pad the index with zeroes so that sorted() retains proper index order
-            row_key = row['prog_code'] + '__' + row['start_term_code'] + '__' + _leftpad_index(i, data_len_magnitude)
+            row_key = row['prog_code'] + '__' + row['start_term_code'] + '__' + format(i, '0%sd' % num_decimal_places)
             new_hashes[row_key] = self.convert_dictionary_to_hash(row)
 
         # This is only true on the first run, so the file has to be created
