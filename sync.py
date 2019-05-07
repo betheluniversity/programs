@@ -19,7 +19,7 @@ from raven.contrib.flask import Sentry
 
 # Imports from elsewhere in this project
 from mail import send_message
-from config import WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID, XML_URL, BANNER_HASHES_CSV_PATH
+from config import WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID, XML_URL, BANNER_HASHES_AUDIT_CSV_PATH
 
 
 app = Flask(__name__)
@@ -48,8 +48,8 @@ class CascadeBlockProcessor:
         # First, read in dictionary of old {row_keys: md5 hashes} from .csv
         # Disclaimer: md5 hashes can contain commas, so the separator is technically ',\t'
         old_hashes = {}
-        if os.path.isfile(BANNER_HASHES_CSV_PATH):
-            with open(BANNER_HASHES_CSV_PATH, 'r') as old_data_hashes:
+        if os.path.isfile(BANNER_HASHES_AUDIT_CSV_PATH):
+            with open(BANNER_HASHES_AUDIT_CSV_PATH, 'r') as old_data_hashes:
                 for line in old_data_hashes.readlines():
                     vals = line.split(',\t')
                     old_hashes[vals[0]] = vals[1]
@@ -72,8 +72,8 @@ class CascadeBlockProcessor:
             new_hashes[row_key] = self.convert_dictionary_to_hash(row)
 
         # This is only true on the first run, so the file has to be created
-        if not os.path.isfile(BANNER_HASHES_CSV_PATH):
-            with open(BANNER_HASHES_CSV_PATH, 'w+') as new_data_hashes:
+        if not os.path.isfile(BANNER_HASHES_AUDIT_CSV_PATH):
+            with open(BANNER_HASHES_AUDIT_CSV_PATH, 'w+') as new_data_hashes:
                 for row_key in sorted(new_hashes.keys()):
                     new_data_hashes.write('%s,\t%s,\t\n' % (row_key, new_hashes[row_key]))
 
@@ -162,7 +162,7 @@ class CascadeBlockProcessor:
             different_or_new_rows.append(new_banner_data[new_row_index])
 
         # Fifth, write the new dictionary to the .csv
-        with open(BANNER_HASHES_CSV_PATH, 'w+') as new_data_hashes:
+        with open(BANNER_HASHES_AUDIT_CSV_PATH, 'w+') as new_data_hashes:
             for row_key in sorted(new_hashes.keys()):
                 new_data_hashes.write('%s,\t%s,\t\n' % (row_key, new_hashes[row_key]))
 

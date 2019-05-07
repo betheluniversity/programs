@@ -31,5 +31,13 @@ RECIPIENTS = ['']
 
 RAVEN_URL = ''
 
-# Has to be absolute path, not relative
-BANNER_HASHES_CSV_PATH = ''
+"""
+This variable is an absolute filepath of where on the server sync.py::get_changed_banner_rows_and_distinct_prog_codes()
+should read its input and store its output. It's a .csv file with two values in each line: the first value is a 3-part
+key that has the program code, start term code, and the index of which row of data it was fetched from. The second value
+is the corresponding MD5 hash of the row of data that gets stored in a dictionary at the key's location.
+
+By storing what the hashes of previous values of Banner's rows of data, it allows us to detect if any rows of data have
+changed between syncs, and only pass long the rows that are different instead of having to blindly pass on all rows.
+"""
+BANNER_HASHES_AUDIT_CSV_PATH = ''
