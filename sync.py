@@ -200,6 +200,9 @@ class CascadeBlockProcessor:
     def process_all_blocks(self, time_to_wait, send_email_after):
         changed_rows = self.get_changed_banner_rows()
 
+        if len(changed_rows) == 0:
+            return 'No data has been changed in Banner since the last sync; skipping all blocks'
+
         r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
         # Process the r.text to find the errant, non-ASCII characters
         safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
@@ -273,6 +276,9 @@ class CascadeBlockProcessor:
         return True
 
     def process_block(self, data, block_id):
+        if len(data) == 0:
+            return 'No data has been updated in Banner since the last sync; skipping sync of block ID "%s"' % block_id
+
         this_block_had_a_concentration_updated = False
 
         program_block = Block(self.cascade, block_id)
@@ -345,6 +351,8 @@ class CascadeBlockProcessor:
 
                 banner_details_added += 1
 
+            # TODO: this will fail a LOT because we only iterate over rows that have changed in Banner. Figure out
+            # a better check...
             if banner_details_added == 0:
                 print "No data found for program code %s, even though it's supposed to sync" % concentration_code
                 self.missing_data_codes.append(
