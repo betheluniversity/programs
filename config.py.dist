@@ -30,3 +30,6 @@ XML_URL = ''
 RECIPIENTS = ['']
 
 RAVEN_URL = ''
+
+# Has to be absolute path, not relative
+BANNER_HASHES_CSV_PATH = ''
