@@ -3,6 +3,7 @@ import ast
 import copy
 import hashlib
 import json
+import math
 import os
 import time
 import unicodedata
@@ -58,81 +59,140 @@ class CascadeBlockProcessor:
         return repr(hashlib.md5(alphabetized_string).digest())
 
     def get_changed_banner_rows(self):
-        # First, read in dictionary of old {program_codes: md5 hashes} from .csv
-        filepath = '/Users/phg49389/Sites/programs/bannerDataHashes.csv'
+        """
+        In order for this method to work properly, the rows of data returned by Banner via WSAPI must be sorted
+        alphabetically by program code. If the rows are parsed out of order, the tertiary check (row index) will
+        produce errant results. Thankfully the sorting is already done by WSAPI before the data gets sent here.
+        """
+
+        # First, read in dictionary of old {row_keys: md5 hashes} from .csv
+        # Disclaimer: md5 hashes can contain commas, so the separator is technically ',\t'
+        filepath = '/Users/phg49389/Sites/programs/bannerDataHashes.csv'  # Has to be absolute path, not relative
         old_hashes = {}
         if os.path.isfile(filepath):
             with open(filepath, 'r') as old_data_hashes:
                 for line in old_data_hashes.readlines():
-                    vals = line.split(',')
+                    vals = line.split(',\t')
                     old_hashes[vals[0]] = vals[1]
 
         # Second, read in current values of data from Banner via WSAPI
+        # These are sorted twice in WSAPI: first by prog_code, and then sub-sorted by start_term_code
         new_banner_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
+        # Sourced from: https://stackoverflow.com/a/16839304
+        data_len_magnitude = int(math.log10(len(new_banner_data)))
 
-        # Third, create a dictionary of new {program_codes: (row indexes, md5 hashes)}
+        def _leftpad_index(index, mag):
+            if index == 0:
+                # Can't take the log of 0
+                index_magnitude = 0
+            else:
+                # Take in an integer i, and left-pad zeroes until it has as many decimal places as specified by "mag"
+                index_magnitude = int(math.log10(index))
+            return '0' * (mag - index_magnitude) + str(index)
+
+        # Third, create a dictionary of new md5 hashes, each stored at a 3-part key:
+        # prog_code, start_term_code, and row index
         new_hashes = {}
         for i in range(len(new_banner_data)):
             row = new_banner_data[i]
-            new_hashes[row['prog_code']] = (i, self.convert_dictionary_to_hash(row))
+            # Have to left-pad the index with zeroes so that sorted() retains proper index order
+            row_key = row['prog_code'] + '__' + row['start_term_code'] + '__' + _leftpad_index(i, data_len_magnitude)
+            new_hashes[row_key] = self.convert_dictionary_to_hash(row)
 
         # This is only true on the first run, so the file has to be created
         if not os.path.isfile(filepath):
             with open(filepath, 'w+') as new_data_hashes:
-                for program_code in new_hashes.keys():
-                    new_data_hashes.write('%s,%s\n' % (program_code, new_hashes[program_code][1]))
+                for row_key in sorted(new_hashes.keys()):
+                    new_data_hashes.write('%s,\t%s,\t\n' % (row_key, new_hashes[row_key]))
 
             # Return all rows as "new"
             return new_banner_data
 
-        # Fourth, check if any md5 hashes in new are different than in old, or if new has md5 hashes that old doesn't
-        # If there are any differences, put the corresponding rows into an array that will eventually be iterated over
+        # Fourth, check if any md5 hashes in new are different than in old, or if new has md5 hashes that old doesn't.
+        # If there are any differences, put the corresponding rows into an array that will eventually be returned.
+        # Due to how the rows are sorted in WSAPI and how the row_key is generated for the dictionaries, the indexes
+        # at the end of each row_key should be in order from 0-n. This is CRUCIAL to the sorting algorithm below!
         old_index = 0
         old_keys = sorted(old_hashes.keys())
         new_index = 0
         new_keys = sorted(new_hashes.keys())
+
+        # This variable is an offset to help compare new row indexes to old row indexes
+        # A positive value means there have been more rows added to new than rows deleted from old, and vice versa
+        num_rows_inserted_or_deleted = 0
         different_or_new_rows = []
 
         while old_index < len(old_keys) and new_index < len(new_keys):
-            old_program_code = old_keys[old_index]
-            new_program_code = new_keys[new_index]
+            old_key = old_keys[old_index]
+            old_program_code, old_start_term_code, old_row_index = old_key.split('__')
+            old_row_index = int(old_row_index)
+            new_key = new_keys[new_index]
+            new_program_code, new_start_term_code, new_row_index = new_key.split('__')
+            new_row_index = int(new_row_index)
 
-            # Is this a program code that was deleted from banner between old and new?
+            """
+            For all three of these checks, this is the logic:
+            
+                If old is alphanumerically before new, that implies that the corresponding old row was deleted. 
+                Increment old_index, subtract from the row index offset variable, and move on.
+                
+                If old is alphanumerically after new, that implies that the corresponding new row was inserted.
+                Increment new_index, add to the row index offset variable, and append the new row.
+                
+                If old == new, then move on to the next layer of checks.
+                
+            Finally, if all three values of the old and the new keys are equal, then compare the values of the hashes.
+            If the hashes are different, then the row has changed. Append the changed row, and increment both 
+            old_index and new_index.
+            """
             if old_program_code < new_program_code:
-                # We don't want to update any rows that were deleted, so increment the old_index and move on
                 old_index += 1
-
-            # Is this a program code that was added to banner between old and new?
+                num_rows_inserted_or_deleted -= 1
             elif old_program_code > new_program_code:
-                # We want to update Cascade with that new row
-                index_of_new_row = new_hashes[new_program_code][0]
-                different_or_new_rows.append(new_banner_data[index_of_new_row])
+                different_or_new_rows.append(new_banner_data[new_row_index])
                 new_index += 1
+                num_rows_inserted_or_deleted += 1
+            else:  # old_program_code == new_program_code
+                # If the prog_codes are the same, compare by start_term_code
+                if old_start_term_code < new_start_term_code:
+                    old_index += 1
+                    num_rows_inserted_or_deleted -= 1
+                elif old_start_term_code > new_start_term_code:
+                    different_or_new_rows.append(new_banner_data[new_row_index])
+                    new_index += 1
+                    num_rows_inserted_or_deleted += 1
+                else:  # old_start_term_code == new_start_term_code
+                    # If both prog_codes and start_term_codes are the same, check the row indexes
+                    if old_row_index + num_rows_inserted_or_deleted < new_row_index:
+                        old_index += 1
+                        num_rows_inserted_or_deleted -= 1
+                    elif old_row_index + num_rows_inserted_or_deleted > new_row_index:
+                        different_or_new_rows.append(new_banner_data[new_row_index])
+                        new_index += 1
+                        num_rows_inserted_or_deleted += 1
+                    else:  # old_row_index == new_row_index
+                        # If all values of the old row_key and new row_key are the same, finally we can compare hashes
+                        old_hash = old_hashes[old_key]
+                        new_hash = new_hashes[new_key]
+                        if old_hash != new_hash:
+                            # The hashes, and therefore the content of the rows, are different
+                            different_or_new_rows.append(new_banner_data[new_row_index])
 
-            # Is this a program code that old and new both have?
-            else:
-                # Check if the hashes in the two dictionaries have different values
-                old_hash = old_hashes[old_program_code]
-                new_hash = new_hashes[new_program_code][1]
-
-                if old_hash != new_hash:
-                    index_of_changed_row = new_hashes[new_program_code][0]
-                    different_or_new_rows.append(new_banner_data[index_of_changed_row])
-
-                old_index += 1
-                new_index += 1
+                        old_index += 1
+                        new_index += 1
 
         # Edge cases: it's possible that the while loop above may end before iterating over all keys in both arrays
         # We can discard any keys from the old list since they just represent rows of data that were deleted, but
-        # any keys remaining the new list represent rows that have been added between runs
+        # any keys remaining the new list represent rows that have been inserted between runs
         for i in range(new_index, len(new_keys)):
-            index_of_new_row = new_hashes[new_keys[i]][0]
-            different_or_new_rows.append(new_banner_data[index_of_new_row])
+            new_key = new_keys[new_index]
+            new_row_index = int(new_key.split('__')[2])
+            different_or_new_rows.append(new_banner_data[new_row_index])
 
         # Fifth, write the new dictionary to the .csv
         with open(filepath, 'w+') as new_data_hashes:
-            for program_code in new_hashes.keys():
-                new_data_hashes.write('%s,%s\n' % (program_code, new_hashes[program_code][1]))
+            for row_key in sorted(new_hashes.keys()):
+                new_data_hashes.write('%s,\t%s,\t\n' % (row_key, new_hashes[row_key]))
 
         # Finally, return the array of different rows for use in block processing
         return different_or_new_rows
