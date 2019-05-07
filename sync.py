@@ -83,7 +83,7 @@ class CascadeBlockProcessor:
     def get_unused_banner_codes(self, data):
         unused_banner_codes = []
         for data in data:  # removed ".iteritems()", as it was throwing an error.
-            if data['prog_code'] not in self.codes_found_in_cascade and data['prog_code'] not in unused_banner_codes:
+            if data['prog_code'] not in self.codes_found_in_cascade and data['prog_code'] not in unused_banner_codes and data['prog_code'] not in app.config['SKIP_CONCENTRATION_CODES']:
                 unused_banner_codes.append(data['prog_code'])
                 print data['prog_code']
 
