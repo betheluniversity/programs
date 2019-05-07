@@ -58,11 +58,12 @@ class CascadeBlockProcessor:
 
         return repr(hashlib.md5(alphabetized_string).digest())
 
-    def get_changed_banner_rows(self):
+    def get_changed_banner_rows_and_distinct_prog_codes(self):
         """
         In order for this method to work properly, the rows of data returned by Banner via WSAPI must be sorted
         alphabetically by program code. If the rows are parsed out of order, the tertiary check (row index) will
         produce errant results. Thankfully the sorting is already done by WSAPI before the data gets sent here.
+        :return (Dict[] changed_rows, Set distinct_prog_codes)
         """
 
         # First, read in dictionary of old {row_keys: md5 hashes} from .csv
@@ -93,8 +94,11 @@ class CascadeBlockProcessor:
         # Third, create a dictionary of new md5 hashes, each stored at a 3-part key:
         # prog_code, start_term_code, and row index
         new_hashes = {}
+        distinct_program_codes = set()
         for i in range(len(new_banner_data)):
             row = new_banner_data[i]
+            # Convert values from unicode to string
+            distinct_program_codes.add(str(row['prog_code']))
             # Have to left-pad the index with zeroes so that sorted() retains proper index order
             row_key = row['prog_code'] + '__' + row['start_term_code'] + '__' + _leftpad_index(i, data_len_magnitude)
             new_hashes[row_key] = self.convert_dictionary_to_hash(row)
@@ -106,7 +110,7 @@ class CascadeBlockProcessor:
                     new_data_hashes.write('%s,\t%s,\t\n' % (row_key, new_hashes[row_key]))
 
             # Return all rows as "new"
-            return new_banner_data
+            return new_banner_data, distinct_program_codes
 
         # Fourth, check if any md5 hashes in new are different than in old, or if new has md5 hashes that old doesn't.
         # If there are any differences, put the corresponding rows into an array that will eventually be returned.
@@ -195,10 +199,10 @@ class CascadeBlockProcessor:
                 new_data_hashes.write('%s,\t%s,\t\n' % (row_key, new_hashes[row_key]))
 
         # Finally, return the array of different rows for use in block processing
-        return different_or_new_rows
+        return different_or_new_rows, distinct_program_codes
 
     def process_all_blocks(self, time_to_wait, send_email_after):
-        changed_rows = self.get_changed_banner_rows()
+        changed_rows, distinct_program_codes = self.get_changed_banner_rows_and_distinct_prog_codes()
 
         if len(changed_rows) == 0:
             return 'No data has been changed in Banner since the last sync; skipping all blocks'
@@ -217,7 +221,7 @@ class CascadeBlockProcessor:
 
             block_id = block.get('id')
 
-            result = self.process_block(changed_rows, block_id)
+            result = self.process_block(changed_rows, block_id, distinct_program_codes)
             blocks.append(result)
             time.sleep(time_to_wait)
 
@@ -245,9 +249,9 @@ class CascadeBlockProcessor:
         return self.process_block_by_id(block_id)
 
     def process_block_by_id(self, id):
-        changed_rows = self.get_changed_banner_rows()
+        changed_rows, distinct_program_codes = self.get_changed_banner_rows_and_distinct_prog_codes()
 
-        return self.process_block(changed_rows, id)
+        return self.process_block(changed_rows, id, distinct_program_codes)
 
     # we gather unused banner codes to send report emails after the sync
     def get_unused_banner_codes(self, data):
@@ -275,7 +279,7 @@ class CascadeBlockProcessor:
 
         return True
 
-    def process_block(self, data, block_id):
+    def process_block(self, data, block_id, program_codes):
         if len(data) == 0:
             return 'No data has been updated in Banner since the last sync; skipping sync of block ID "%s"' % block_id
 
@@ -298,6 +302,17 @@ class CascadeBlockProcessor:
 
         for concentration in concentrations:
             concentration_code = find(concentration, 'concentration_code', False)
+
+            # First, check if this concentration_code is found in the data from Banner.
+            if not isinstance(concentration_code, bool) and concentration_code not in program_codes:
+                print "No data found for program code %s, even though it's supposed to sync" % concentration_code
+                self.missing_data_codes.append(
+                    """ %s (%s) """ % (find(block_asset, 'name', False), concentration_code)
+                )
+                continue
+            else:
+                # mark the code down as "seen"
+                self.codes_found_in_cascade.append(concentration_code)
 
             self.delete_and_clear_cohort_details(concentration)
 
@@ -350,17 +365,6 @@ class CascadeBlockProcessor:
                     update(concentration, 'concentration_name', row['prog_desc'])
 
                 banner_details_added += 1
-
-            # TODO: this will fail a LOT because we only iterate over rows that have changed in Banner. Figure out
-            # a better check...
-            if banner_details_added == 0:
-                print "No data found for program code %s, even though it's supposed to sync" % concentration_code
-                self.missing_data_codes.append(
-                    """ %s (%s) """ % (find(block_asset, 'name', False), concentration_code)
-                )
-            else:
-                # mark the code down as "seen"
-                self.codes_found_in_cascade.append(concentration_code)
 
         if this_block_had_a_concentration_updated:
             if not app.config['DEVELOPMENT']:
