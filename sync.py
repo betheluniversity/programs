@@ -35,27 +35,7 @@ class CascadeBlockProcessor:
         self.missing_data_codes = []
 
     def convert_dictionary_to_hash(self, dictionary):
-
-        def _recursively_alphabetize_dictionary_by_keys(dictionary_to_alphabetize):
-            if isinstance(dictionary_to_alphabetize, dict):
-                to_return = '{'
-                ordered_keys = sorted(dictionary_to_alphabetize.keys())
-                for key in ordered_keys:
-                    to_return += "'%s': " % str(key)
-                    value = dictionary_to_alphabetize[key]
-                    if isinstance(value, dict):
-                        to_return += _recursively_alphabetize_dictionary_by_keys(value)
-                    elif isinstance(value, (str, unicode)):
-                        to_return += "'%s'" % str(value)
-                    to_return += ', '
-
-                return to_return + '}'
-            else:
-                return 'Not a dictionary'
-
-        alphabetized_string = _recursively_alphabetize_dictionary_by_keys(dictionary)
-
-        return repr(hashlib.md5(alphabetized_string).digest())
+        return repr(hashlib.md5(str(dictionary)).digest())
 
     def get_changed_banner_rows_and_distinct_prog_codes(self):
         """
