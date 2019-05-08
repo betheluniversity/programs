@@ -64,8 +64,6 @@ class CascadeBlockProcessor:
                 # This is true whenever the same row has a different value, or when it's a new row entirely.
                 different_or_new_rows.append(row)
 
-        print '# of new/diff rows:', len(different_or_new_rows)
-
         # Fourth, write all hashes from the new rows to the .csv
         with open(BANNER_HASHES_AUDIT_CSV_PATH, 'w+') as new_data_hashes:
             for new_hash in new_hashes:
