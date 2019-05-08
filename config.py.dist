@@ -1,32 +1,42 @@
 DB_KEY = 'abc:123'
 
-CON_STRING = ""
+CON_STRING = ''
 
 
-DEVELOPMENT = ""
-CODE_SQL = ""
+DEVELOPMENT = ''
+CODE_SQL = ''
 
-ALL_SQL = ""
+ALL_SQL = ''
 
-TABLE_NAME = ""
+TABLE_NAME = ''
 
-KEY_COLUMN = ""
+KEY_COLUMN = ''
 
-CAPS_GS_SEM_RECIPIENTS = ""
-BCC = ""
+CAPS_GS_SEM_RECIPIENTS = ''
+BCC = ''
 
-WSDL = ""
+WSDL = ''
 AUTH = {'username': '', 'password': ''}
 SITE_ID = ''
 STAGING_DESTINATION_ID = ''
 
 PUBLISHSET_ID = ''
 
-secret_key = ""
-SECRET_KEY = ""
+secret_key = ''
+SECRET_KEY = ''
 
 XML_URL = ''
 
 RECIPIENTS = ['']
 
 RAVEN_URL = ''
+
+"""
+This variable is an absolute filepath of where on the server sync.py::get_changed_banner_rows_and_distinct_prog_codes()
+should read its input and store its output. It's a .csv file, and each line in the file is an MD5 hash of a row of data
+returned by Banner. Thus, there are as many lines in this file as there are rows of data returned by Banner via WSAPI.
+
+By storing what the hashes of previous values of Banner's rows of data, it allows us to detect if any rows of data have
+changed between syncs, and only pass along the rows that are different instead of having to blindly pass on all rows.
+"""
+BANNER_HASHES_AUDIT_CSV_PATH = ''
