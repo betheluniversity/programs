@@ -106,7 +106,9 @@ class CascadeBlockProcessor:
             unused_banner_codes = self.get_unused_banner_codes(changed_rows)
             caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
             admin_email_content = render_template('admin_email.html', **locals())
-            send_message('Readers Digest: Program Sync', admin_email_content, html=True)
+
+            if admin_email_content:
+                send_message('Readers Digest: Program Sync', admin_email_content, html=True)
 
             # reset the codes found
             self.codes_found_in_cascade = []
