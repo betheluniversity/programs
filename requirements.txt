@@ -1,4 +1,4 @@
-bu-cascade
+bu-cascade>=3.12
 SQLAlchemy>=1.3.0
 Flask
 Flask-Classy
