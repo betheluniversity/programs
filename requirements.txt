@@ -8,3 +8,4 @@ Flask-Mail
 raven[flask]
 beautifulsoup4
 cx_Oracle
+Werkzeug==0.14.1
