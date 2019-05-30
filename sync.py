@@ -35,7 +35,7 @@ class CascadeBlockProcessor:
         self.missing_data_codes = []
 
     def convert_dictionary_to_hash(self, dictionary):
-        return repr(hashlib.md5(str(dictionary)).digest())
+        return repr(hashlib.md5(str(dictionary).encode('utf-8')).digest())
 
     def get_changed_banner_rows_and_distinct_prog_codes(self):
         # First, read in the old hashes from the .csv
@@ -161,7 +161,8 @@ class CascadeBlockProcessor:
         program_block = Block(self.cascade, block_id)
         block_asset = program_block.asset
 
-        block_path = find(block_asset, 'path', False)
+        block_path = find(block_asset, 'path', False).decode('utf-8')
+
         if find(block_asset, 'definitionPath', False) != 'Blocks/Program':
             return block_path + ' not in Blocks/Program'
 
