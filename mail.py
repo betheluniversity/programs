@@ -1,5 +1,5 @@
 import socket
-from flask.ext.mail import Mail, Message
+from flask_mail import Mail, Message
 from config import ADMIN_RECIPIENTS, CAPS_GS_SEM_RECIPIENTS
 
 
@@ -24,7 +24,7 @@ def send_message(subject, body, html=False, caps_gs_sem=False):
     try:
         mail.send(msg)
     except socket.error:
-        print 'failed to send message %s' % body
+        print('failed to send message %s' % body)
         return False
 
     return True

@@ -14,7 +14,7 @@ from bu_cascade.assets.block import Block
 from bu_cascade.cascade_connector import Cascade
 from bu_cascade.asset_tools import find, update
 from flask import Flask, render_template
-from flask.ext.classy import FlaskView, route
+from flask_classy import FlaskView, route
 from raven.contrib.flask import Sentry
 
 # Imports from elsewhere in this project
@@ -35,7 +35,7 @@ class CascadeBlockProcessor:
         self.missing_data_codes = []
 
     def convert_dictionary_to_hash(self, dictionary):
-        return repr(hashlib.md5(str(dictionary)).digest())
+        return repr(hashlib.md5(str(dictionary).encode('utf-8')).digest())
 
     def get_changed_banner_rows_and_distinct_prog_codes(self):
         # First, read in the old hashes from the .csv
@@ -132,7 +132,7 @@ class CascadeBlockProcessor:
         for data in data:  # removed '.iteritems()', as it was throwing an error.
             if data['prog_code'] not in self.codes_found_in_cascade and data['prog_code'] not in unused_banner_codes and data['prog_code'] not in app.config['SKIP_CONCENTRATION_CODES']:
                 unused_banner_codes.append(data['prog_code'])
-                print data['prog_code']
+                print(data['prog_code'])
 
         return unused_banner_codes
 
@@ -161,7 +161,8 @@ class CascadeBlockProcessor:
         program_block = Block(self.cascade, block_id)
         block_asset = program_block.asset
 
-        block_path = find(block_asset, 'path', False)
+        block_path = find(block_asset, 'path', False).decode('utf-8')
+
         if find(block_asset, 'definitionPath', False) != 'Blocks/Program':
             return block_path + ' not in Blocks/Program'
 
@@ -178,7 +179,7 @@ class CascadeBlockProcessor:
 
             # First, check if this concentration_code is found in the data from Banner.
             if not isinstance(concentration_code, bool) and concentration_code not in program_codes:
-                print "No data found for program code %s, even though it's supposed to sync" % concentration_code
+                print("No data found for program code %s, even though it's supposed to sync" % concentration_code)
                 self.missing_data_codes.append(
                     """ %s (%s) """ % (find(block_asset, 'name', False), concentration_code)
                 )
