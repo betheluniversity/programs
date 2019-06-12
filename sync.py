@@ -159,10 +159,10 @@ class CascadeBlockProcessor:
         return True
 
     def process_block(self, data, block_id):
-        if len(data) == 0:
-            return 'No data has been updated in Banner since the last sync; skipping sync of block ID "%s"' % block_id
+        # if len(data) == 0:
+        #     return 'No data has been updated in Banner since the last sync; skipping sync of block ID "%s"' % block_id
 
-        this_block_had_a_concentration_updated = False
+        # this_block_had_a_concentration_updated = False
 
         program_block = Block(self.cascade, block_id)
         block_asset = program_block.asset
@@ -183,16 +183,17 @@ class CascadeBlockProcessor:
         for concentration in concentrations:
             concentration_code = find(concentration, 'concentration_code', False)
 
-            # First, check if this concentration_code is found in the data from Banner.
-            if not isinstance(concentration_code, bool) and concentration_code not in data:
-                print("No data found for program code %s, even though it's supposed to sync" % concentration_code)
-                self.missing_data_codes.append(
-                    """ %s (%s) """ % (find(block_asset, 'name', False), concentration_code)
-                )
-                continue
-            else:
-                # mark the code down as "seen"
-                self.codes_found_in_cascade.append(concentration_code)
+            # # First, check if this concentration_code is found in the data from Banner.
+            # if not isinstance(concentration_code, bool) and concentration_code not in data:
+            #     print("No data found for program code %s, even though it's supposed to sync" % concentration_code)
+            #     self.missing_data_codes.append(
+            #         """ %s (%s) """ % (find(block_asset, 'name', False), concentration_code)
+            #     )
+            #     continue
+            # else:
+            #     # mark the code down as "seen"
+            #     self.codes_found_in_cascade.append(concentration_code)
+            self.codes_found_in_cascade.append(concentration_code)
 
             self.delete_and_clear_cohort_details(concentration)
 
@@ -201,7 +202,7 @@ class CascadeBlockProcessor:
                 if row['prog_code'] != concentration_code:
                     continue
 
-                this_block_had_a_concentration_updated = True
+                # this_block_had_a_concentration_updated = True
 
                 # if you need more banner details, copy more!
                 if banner_details_added != 0:
@@ -246,26 +247,26 @@ class CascadeBlockProcessor:
 
                 banner_details_added += 1
 
-        if this_block_had_a_concentration_updated:
-            try:
-                program_block.edit_asset(block_asset)
+        # if this_block_had_a_concentration_updated:
+        try:
+            program_block.edit_asset(block_asset)
 
-                # we are getting the concentration path and publishing out the applicable
-                # program details folder and program index page.
-                concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
-                program_folder = '/' + concentration_page_path[:concentration_page_path.find('program-details')]
-                # 1) publish the program-details folder
-                self.cascade.publish(program_folder + 'program-details', 'folder')
+            # we are getting the concentration path and publishing out the applicable
+            # program details folder and program index page.
+            concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
+            program_folder = '/' + concentration_page_path[:concentration_page_path.find('program-details')]
+            # 1) publish the program-details folder
+            self.cascade.publish(program_folder + 'program-details', 'folder')
 
-                # 2) publish the program index
-                self.cascade.publish(program_folder + 'index', 'page')
-            except:
-                sentry.captureException()
-                return block_path + ' failed to sync'
+            # 2) publish the program index
+            self.cascade.publish(program_folder + 'index', 'page')
+        except:
+            sentry.captureException()
+            return block_path + ' failed to sync'
 
-            return block_path + ' successfully updated and synced'
-        else:
-            return block_path + " didn't have any data updated in Banner"
+        return block_path + ' successfully updated and synced'
+        # else:
+        #     return block_path + " didn't have any data updated in Banner"
 
 
 class AdultProgramsView(FlaskView):
