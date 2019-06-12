@@ -73,10 +73,13 @@ class CascadeBlockProcessor:
         return different_or_new_rows, distinct_program_codes
 
     def process_all_blocks(self, time_to_wait, send_email_after):
-        changed_rows, distinct_program_codes = self.get_changed_banner_rows_and_distinct_prog_codes()
+        # changed_rows, distinct_program_codes = self.get_changed_banner_rows_and_distinct_prog_codes()
 
-        if len(changed_rows) == 0:
-            return 'No data has been changed in Banner since the last sync; skipping all blocks'
+        # if len(changed_rows) == 0:
+        #     return 'No data has been changed in Banner since the last sync; skipping all blocks'
+
+        # todo: can be removed
+        data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
         r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
         # Process the r.text to find the errant, non-ASCII characters
@@ -92,7 +95,7 @@ class CascadeBlockProcessor:
 
             block_id = block.get('id')
 
-            result = self.process_block(changed_rows, block_id, distinct_program_codes)
+            result = self.process_block(data, block_id)
             blocks.append(result)
             time.sleep(time_to_wait)
 
@@ -103,7 +106,7 @@ class CascadeBlockProcessor:
             if len(missing_data_codes) > 0:
                 send_message('No CAPS/GS Banner Data Found', caps_gs_sem_email_content, html=True, caps_gs_sem=True)
 
-            unused_banner_codes = self.get_unused_banner_codes(changed_rows)
+            unused_banner_codes = self.get_unused_banner_codes(data)
             caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
             admin_email_content = render_template('admin_email.html', **locals())
 
@@ -122,9 +125,12 @@ class CascadeBlockProcessor:
         return self.process_block_by_id(block_id)
 
     def process_block_by_id(self, id):
-        changed_rows, distinct_program_codes = self.get_changed_banner_rows_and_distinct_prog_codes()
+        # changed_rows, distinct_program_codes = self.get_changed_banner_rows_and_distinct_prog_codes()
 
-        return self.process_block(changed_rows, id, distinct_program_codes)
+        # todo: can be removed
+        data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
+
+        return self.process_block(data, id)
 
     # we gather unused banner codes to send report emails after the sync
     def get_unused_banner_codes(self, data):
@@ -152,7 +158,7 @@ class CascadeBlockProcessor:
 
         return True
 
-    def process_block(self, data, block_id, program_codes):
+    def process_block(self, data, block_id):
         if len(data) == 0:
             return 'No data has been updated in Banner since the last sync; skipping sync of block ID "%s"' % block_id
 
@@ -178,7 +184,7 @@ class CascadeBlockProcessor:
             concentration_code = find(concentration, 'concentration_code', False)
 
             # First, check if this concentration_code is found in the data from Banner.
-            if not isinstance(concentration_code, bool) and concentration_code not in program_codes:
+            if not isinstance(concentration_code, bool) and concentration_code not in data:
                 print("No data found for program code %s, even though it's supposed to sync" % concentration_code)
                 self.missing_data_codes.append(
                     """ %s (%s) """ % (find(block_asset, 'name', False), concentration_code)
