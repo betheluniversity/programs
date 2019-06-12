@@ -247,22 +247,18 @@ class CascadeBlockProcessor:
                 banner_details_added += 1
 
         if this_block_had_a_concentration_updated:
-            if not app.config['DEVELOPMENT']:
-                try:
-                    # we are getting the concentration path and publishing out the applicable
-                    # program details folder and program index page.
-                    concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
-                    program_folder = '/' + concentration_page_path[:concentration_page_path.find('program-details')]
-                    # 1) publish the program-details folder
-                    self.cascade.publish(program_folder + 'program-details', 'folder')
-
-                    # 2) publish the program index
-                    self.cascade.publish(program_folder + 'index', 'page')
-                except:
-                    sentry.captureException()
-
             try:
                 program_block.edit_asset(block_asset)
+
+                # we are getting the concentration path and publishing out the applicable
+                # program details folder and program index page.
+                concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
+                program_folder = '/' + concentration_page_path[:concentration_page_path.find('program-details')]
+                # 1) publish the program-details folder
+                self.cascade.publish(program_folder + 'program-details', 'folder')
+
+                # 2) publish the program index
+                self.cascade.publish(program_folder + 'index', 'page')
             except:
                 sentry.captureException()
                 return block_path + ' failed to sync'
