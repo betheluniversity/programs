@@ -161,7 +161,7 @@ class CascadeBlockProcessor:
         program_block = Block(self.cascade, block_id)
         block_asset = program_block.asset
 
-        block_path = find(block_asset, 'path', False).decode('utf-8')
+        block_path = find(block_asset, 'path', False)
 
         if find(block_asset, 'definitionPath', False) != 'Blocks/Program':
             return block_path + ' not in Blocks/Program'
@@ -241,8 +241,10 @@ class CascadeBlockProcessor:
                 banner_details_added += 1
 
         if this_block_had_a_concentration_updated:
-            if not app.config['DEVELOPMENT']:
-                try:
+            try:
+                program_block.edit_asset(block_asset)
+
+                if not app.config['DEVELOPMENT']:
                     # we are getting the concentration path and publishing out the applicable
                     # program details folder and program index page.
                     concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
@@ -252,11 +254,6 @@ class CascadeBlockProcessor:
 
                     # 2) publish the program index
                     self.cascade.publish(program_folder + 'index', 'page')
-                except:
-                    sentry.captureException()
-
-            try:
-                program_block.edit_asset(block_asset)
             except:
                 sentry.captureException()
                 return block_path + ' failed to sync'
