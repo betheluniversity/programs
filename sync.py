@@ -112,6 +112,9 @@ class CascadeBlockProcessor:
 
             # reset the codes found
             self.codes_found_in_cascade = []
+
+        # publish program feeds
+        self.cascade.publish(app.config['PUBLISHSET_ID'], 'publishset')
             
         return 'Finished sync of all CAPS/GS/SEM programs.'
 
