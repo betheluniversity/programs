@@ -51,31 +51,26 @@ class CascadeBlockProcessor:
         new_banner_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
         # Third, iterate through the new rows and see if their hashes are already in the Set of hashes
-        new_hashes = []
-        distinct_program_codes = set()
+        audit_hashes = []
+        all_program_codes = set()
         different_or_new_rows = []
         for row in new_banner_data:
-            distinct_program_codes.add(row['prog_code'])
+            all_program_codes.add(row['prog_code'])
 
             new_hash = self.convert_dictionary_to_hash(row)
-            new_hashes.append(new_hash)
+            audit_hashes.append(new_hash)
 
             if new_hash not in old_hashes:
                 # This is true whenever the same row has a different value, or when it's a new row entirely.
                 different_or_new_rows.append(row)
 
-        # Fourth, write all hashes from the new rows to the .csv
-        with open(BANNER_HASHES_AUDIT_CSV_PATH, 'w+') as new_data_hashes:
-            for new_hash in new_hashes:
-                new_data_hashes.write('%s,\t\n' % new_hash)
-
-        # Finally, return the array of new/different rows and the Set of distinct program codes
-        return different_or_new_rows, distinct_program_codes
+        # Finally, return the array of new/different rows, the Set of distinct program codes, and the audit data
+        return different_or_new_rows, all_program_codes, audit_hashes
 
     def process_all_blocks(self, time_to_wait, send_email_after):
-        changed_rows, distinct_program_codes = self.get_changed_banner_rows_and_distinct_prog_codes()
+        changed_banner_data, all_program_codes, audit_hashes = self.get_changed_banner_rows_and_distinct_prog_codes()
 
-        if len(changed_rows) == 0:
+        if len(changed_banner_data) == 0:
             return 'No data has been changed in Banner since the last sync; skipping all blocks'
 
         r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
@@ -92,7 +87,7 @@ class CascadeBlockProcessor:
 
             block_id = block.get('id')
 
-            result = self.process_block(changed_rows, block_id, distinct_program_codes)
+            result = self.process_block(changed_banner_data, block_id, all_program_codes)
             blocks.append(result)
             time.sleep(time_to_wait)
 
@@ -103,7 +98,7 @@ class CascadeBlockProcessor:
             if len(missing_data_codes) > 0:
                 send_message('No CAPS/GS Banner Data Found', caps_gs_sem_email_content, html=True, caps_gs_sem=True)
 
-            unused_banner_codes = self.get_unused_banner_codes(changed_rows)
+            unused_banner_codes = self.get_unused_banner_codes(changed_banner_data)
             caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
             admin_email_content = render_template('admin_email.html', **locals())
 
@@ -115,6 +110,11 @@ class CascadeBlockProcessor:
 
         # publish program feeds
         self.cascade.publish(app.config['PUBLISHSET_ID'], 'publishset')
+
+        # Write all hashes from the new rows to the .csv
+        with open(BANNER_HASHES_AUDIT_CSV_PATH, 'w+') as new_data_hashes:
+            for new_hash in audit_hashes:
+                new_data_hashes.write('%s,\t\n' % new_hash)
             
         return 'Finished sync of all CAPS/GS/SEM programs.'
 
@@ -125,9 +125,10 @@ class CascadeBlockProcessor:
         return self.process_block_by_id(block_id)
 
     def process_block_by_id(self, id):
-        changed_rows, distinct_program_codes = self.get_changed_banner_rows_and_distinct_prog_codes()
+        # syncing a single block currently doesn't write the audit hashes or publish the program feeds
+        changed_rows, all_program_codes, audit_hashes = self.get_changed_banner_rows_and_distinct_prog_codes()
 
-        return self.process_block(changed_rows, id, distinct_program_codes)
+        return self.process_block(changed_rows, id, all_program_codes)
 
     # we gather unused banner codes to send report emails after the sync
     def get_unused_banner_codes(self, data):
@@ -155,8 +156,8 @@ class CascadeBlockProcessor:
 
         return True
 
-    def process_block(self, data, block_id, program_codes):
-        if len(data) == 0:
+    def process_block(self, changed_banner_data, block_id, all_program_codes):
+        if len(changed_banner_data) == 0:
             return 'No data has been updated in Banner since the last sync; skipping sync of block ID "%s"' % block_id
 
         this_block_had_a_concentration_updated = False
@@ -181,7 +182,7 @@ class CascadeBlockProcessor:
             concentration_code = find(concentration, 'concentration_code', False)
 
             # First, check if this concentration_code is found in the data from Banner.
-            if not isinstance(concentration_code, bool) and concentration_code not in program_codes:
+            if not isinstance(concentration_code, bool) and concentration_code not in all_program_codes:
                 print("No data found for program code %s, even though it's supposed to sync" % concentration_code)
                 self.missing_data_codes.append(
                     """ %s (%s) """ % (find(block_asset, 'name', False), concentration_code)
@@ -194,7 +195,7 @@ class CascadeBlockProcessor:
             self.delete_and_clear_cohort_details(concentration)
 
             banner_details_added = 0
-            for row in data:  # removed '.iteritems()', as it was throwing an error.
+            for row in changed_banner_data:  # removed '.iteritems()', as it was throwing an error.
                 if row['prog_code'] != concentration_code:
                     continue
 
