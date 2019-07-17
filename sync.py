@@ -291,7 +291,7 @@ class AdultProgramsView(FlaskView):
         return self.cbp.process_block_by_path(path)
 
 
-AdultProgramsView.register(app)
+AdultProgramsView.register(app, route_base="/")
 
 
 # Legacy cost per credit code
