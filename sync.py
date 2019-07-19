@@ -64,7 +64,7 @@ class CascadeBlockProcessor:
                 # This is true whenever the same row has a different value, or when it's a new row entirely.
                 different_or_new_rows.append(row)
 
-        # Finally, return the array of new/different rows, the Set of distinct program codes, and the audit data
+        # Finally, return the array of new/different rows, the Set of distinct program codes, and the audit data to be written after we do it
         return different_or_new_rows, all_program_codes, audit_hashes
 
     def process_all_blocks(self, time_to_wait, send_email_after):
@@ -87,9 +87,8 @@ class CascadeBlockProcessor:
 
             block_id = block.get('id')
 
-            result = self.process_block(changed_banner_data, block_id, all_program_codes)
+            result = self.process_block(changed_banner_data, block_id, all_program_codes, time_to_wait)
             blocks.append(result)
-            time.sleep(time_to_wait)
 
         if send_email_after:
             missing_data_codes = self.missing_data_codes
@@ -156,7 +155,7 @@ class CascadeBlockProcessor:
 
         return True
 
-    def process_block(self, changed_banner_data, block_id, all_program_codes):
+    def process_block(self, changed_banner_data, block_id, all_program_codes, time_to_wait):
         if len(changed_banner_data) == 0:
             return 'No data has been updated in Banner since the last sync; skipping sync of block ID "%s"' % block_id
 
@@ -247,6 +246,7 @@ class CascadeBlockProcessor:
         if this_block_had_a_concentration_updated:
             try:
                 program_block.edit_asset(block_asset)
+                time.sleep(time_to_wait)
 
                 if not app.config['DEVELOPMENT']:
                     # we are getting the concentration path and publishing out the applicable
