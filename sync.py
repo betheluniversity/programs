@@ -122,7 +122,7 @@ class CascadeBlockProcessor:
 
     # log any new program code
     def log_concentration_codes(self, changed_banner_data):
-        with open("changed_banner_data.log", mode='a') as file:
+        with open(app.config['BANNER_CHANGED_DATA_LOG'], mode='a') as file:
             for concentration in changed_banner_data:
                 file.write('{} - New concentration code: {}\n'.format(datetime.datetime.now(), concentration.get('prog_code')))
 
