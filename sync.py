@@ -3,6 +3,7 @@ import ast
 import copy
 import hashlib
 import json
+import logging
 import os
 import time
 import unicodedata
@@ -26,6 +27,8 @@ app = Flask(__name__)
 app.config.from_object('config')
 
 sentry = Sentry(app, dsn=app.config['RAVEN_URL'])
+
+logging.basicConfig(filename='changed_banner_data.log', filemode='w', format='%(asctime)s - %(message)s')
 
 
 class CascadeBlockProcessor:
@@ -104,8 +107,8 @@ class CascadeBlockProcessor:
             if missing_data_codes or unused_banner_codes:
                 send_message('Readers Digest: Program Sync', admin_email_content, html=True)
 
-            # reset the codes found
-            self.codes_found_in_cascade = []
+        # reset the codes found
+        self.codes_found_in_cascade = []
 
         # publish program feeds
         self.cascade.publish(app.config['PUBLISHSET_ID'], 'publishset')
@@ -114,8 +117,16 @@ class CascadeBlockProcessor:
         with open(BANNER_HASHES_AUDIT_CSV_PATH, 'w+') as new_data_hashes:
             for new_hash in audit_hashes:
                 new_data_hashes.write('%s,\t\n' % new_hash)
-            
+
+        # log any new concentration code
+        self.log_concentration_codes(changed_banner_data)
+
         return 'Finished sync of all CAPS/GS/SEM programs.'
+
+    # log any new program code
+    def log_concentration_codes(self, changed_banner_data):
+        for code in changed_banner_data:
+            logging.warning("New concentration code: {}".format(code))
 
     # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
