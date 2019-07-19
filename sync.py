@@ -1,6 +1,7 @@
 # Imports from global Python packages
 import ast
 import copy
+import datetime
 import hashlib
 import json
 import os
@@ -40,22 +41,21 @@ class CascadeBlockProcessor:
     def get_changed_banner_rows_and_distinct_prog_codes(self):
         # First, read in the old hashes from the .csv
         # Disclaimer: md5 hashes can contain commas, so the delimiter is technically ',\t'
-        old_hashes = set()
+        old_hashes = []
         if os.path.isfile(BANNER_HASHES_AUDIT_CSV_PATH):
             with open(BANNER_HASHES_AUDIT_CSV_PATH, 'r') as old_data_hashes:
                 for line in old_data_hashes.readlines():
-                    vals = line.split(',\t')
-                    old_hashes.add(vals[0])
+                    old_hashes.append(line.replace('\n', ''))
 
         # Second, fetch the new rows of data
         new_banner_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
         # Third, iterate through the new rows and see if their hashes are already in the Set of hashes
         audit_hashes = []
-        all_program_codes = set()
+        all_program_codes = []
         different_or_new_rows = []
         for row in new_banner_data:
-            all_program_codes.add(row['prog_code'])
+            all_program_codes.append(row['prog_code'])
 
             new_hash = self.convert_dictionary_to_hash(row)
             audit_hashes.append(new_hash)
@@ -104,8 +104,8 @@ class CascadeBlockProcessor:
             if missing_data_codes or unused_banner_codes:
                 send_message('Readers Digest: Program Sync', admin_email_content, html=True)
 
-            # reset the codes found
-            self.codes_found_in_cascade = []
+        # reset the codes found
+        self.codes_found_in_cascade = []
 
         # publish program feeds
         self.cascade.publish(app.config['PUBLISHSET_ID'], 'publishset')
@@ -113,9 +113,18 @@ class CascadeBlockProcessor:
         # Write all hashes from the new rows to the .csv
         with open(BANNER_HASHES_AUDIT_CSV_PATH, 'w+') as new_data_hashes:
             for new_hash in audit_hashes:
-                new_data_hashes.write('%s,\t\n' % new_hash)
-            
+                new_data_hashes.write('{}\n'.format(new_hash))
+
+        # log any new concentration code
+        self.log_concentration_codes(changed_banner_data)
+
         return 'Finished sync of all CAPS/GS/SEM programs.'
+
+    # log any new program code
+    def log_concentration_codes(self, changed_banner_data):
+        with open("changed_banner_data.log", mode='a') as file:
+            for concentration in changed_banner_data:
+                file.write('{} - New concentration code: {}\n'.format(datetime.datetime.now(), concentration.get('prog_code')))
 
     # this method just passes through to process_block_by_id
     def process_block_by_path(self, path):
@@ -156,9 +165,6 @@ class CascadeBlockProcessor:
         return True
 
     def process_block(self, changed_banner_data, block_id, all_program_codes, time_to_wait):
-        if len(changed_banner_data) == 0:
-            return 'No data has been updated in Banner since the last sync; skipping sync of block ID "%s"' % block_id
-
         this_block_had_a_concentration_updated = False
 
         program_block = Block(self.cascade, block_id)
@@ -246,7 +252,6 @@ class CascadeBlockProcessor:
         if this_block_had_a_concentration_updated:
             try:
                 program_block.edit_asset(block_asset)
-                time.sleep(time_to_wait)
 
                 if not app.config['DEVELOPMENT']:
                     # we are getting the concentration path and publishing out the applicable
@@ -258,6 +263,7 @@ class CascadeBlockProcessor:
 
                     # 2) publish the program index
                     self.cascade.publish(program_folder + 'index', 'page')
+                time.sleep(time_to_wait)
             except:
                 sentry.captureException()
                 return block_path + ' failed to sync'
