@@ -136,7 +136,7 @@ class CascadeBlockProcessor:
         # syncing a single block currently doesn't write the audit hashes or publish the program feeds
         changed_rows, all_program_codes, audit_hashes = self.get_changed_banner_rows_and_distinct_prog_codes()
 
-        return self.process_block(changed_rows, id, all_program_codes)
+        return self.process_block(changed_rows, id, all_program_codes, 1)
 
     # we gather unused banner codes to send report emails after the sync
     def get_unused_banner_codes(self, data):
@@ -164,7 +164,7 @@ class CascadeBlockProcessor:
 
         return True
 
-    def process_block(self, changed_banner_data, block_id, all_program_codes, time_to_wait):
+    def process_block(self, changed_banner_data, block_id, all_program_codes, time_to_wait=1):
         this_block_had_a_concentration_updated = False
 
         program_block = Block(self.cascade, block_id)
