@@ -1,10 +1,10 @@
 {# Codes that are in Cascade, but have no data from Banner #}
-{% if missing_data_codes %}
+{% if codes_not_found_in_banner %}
     <h2>Missing Data in Banner</h2>
     <p>An email containing these same codes have been sent to {{ caps_gs_sem_recipients }} <br>
     These codes exist in Cascade, but there is no data in Banner for them.</p>
     <ul>
-        {% for code in missing_data_codes %}
+        {% for code in codes_not_found_in_banner %}
             <li>{{ code }}</li>
         {% endfor %}
     </ul>

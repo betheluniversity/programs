@@ -1,10 +1,10 @@
 <p>The following program codes no longer have banner data associated with them. The live websites now have a message about no cohorts being scheduled. Please address these immediately.</p>
 
 {# Codes that are in Cascade, but have no data from Banner #}
-{% if missing_data_codes %}
+{% if codes_not_found_in_banner %}
     <h2>Missing Data in Banner</h2>
     <ul>
-        {% for code in missing_data_codes %}
+        {% for code in codes_not_found_in_banner %}
             <li>{{ code }}</li>
         {% endfor %}
     </ul>
