@@ -39,5 +39,5 @@ returned by Banner. Thus, there are as many lines in this file as there are rows
 By storing what the hashes of previous values of Banner's rows of data, it allows us to detect if any rows of data have
 changed between syncs, and only pass along the rows that are different instead of having to blindly pass on all rows.
 """
-BANNER_HASHES_AUDIT_CSV_PATH = ''
-BANNER_CHANGED_DATA_LOG = ''
+# BANNER_HASHES_AUDIT_CSV_PATH = ''
+# BANNER_CHANGED_DATA_LOG = ''

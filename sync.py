@@ -20,7 +20,7 @@ from raven.contrib.flask import Sentry
 
 # Imports from elsewhere in this project
 from mail import send_message
-from config import WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID, XML_URL, BANNER_HASHES_AUDIT_CSV_PATH
+from config import WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID, XML_URL
 
 
 app = Flask(__name__)
@@ -33,45 +33,16 @@ class CascadeBlockProcessor:
     def __init__(self):
         self.cascade = Cascade(WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID)
         self.codes_found_in_cascade = []
-        self.missing_data_codes = []
+        self.codes_not_found_in_banner = []
 
-    def convert_dictionary_to_hash(self, dictionary):
-        return repr(hashlib.md5(str(dictionary).encode('utf-8')).digest())
-
-    def get_changed_banner_rows_and_distinct_prog_codes(self):
-        # First, read in the old hashes from the .csv
-        # Disclaimer: md5 hashes can contain commas, so the delimiter is technically ',\t'
-        old_hashes = []
-        if os.path.isfile(BANNER_HASHES_AUDIT_CSV_PATH):
-            with open(BANNER_HASHES_AUDIT_CSV_PATH, 'r') as old_data_hashes:
-                for line in old_data_hashes.readlines():
-                    old_hashes.append(line.replace('\n', ''))
-
-        # Second, fetch the new rows of data
-        new_banner_data = json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
-
-        # Third, iterate through the new rows and see if their hashes are already in the Set of hashes
-        audit_hashes = []
-        all_program_codes = []
-        different_or_new_rows = []
-        for row in new_banner_data:
-            all_program_codes.append(row['prog_code'])
-
-            new_hash = self.convert_dictionary_to_hash(row)
-            audit_hashes.append(new_hash)
-
-            if new_hash not in old_hashes:
-                # This is true whenever the same row has a different value, or when it's a new row entirely.
-                different_or_new_rows.append(row)
-
-        # Finally, return the array of new/different rows, the Set of distinct program codes, and the audit data to be written after we do it
-        return different_or_new_rows, all_program_codes, audit_hashes
+    def get_new_banner_data(self):
+        return json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
     def process_all_blocks(self, time_to_wait, send_email_after):
-        changed_banner_data, all_program_codes, audit_hashes = self.get_changed_banner_rows_and_distinct_prog_codes()
+        new_banner_data = self.get_new_banner_data()
 
-        if len(changed_banner_data) == 0:
-            return 'No data has been changed in Banner since the last sync; skipping all blocks'
+        if len(new_banner_data) == 0:
+            return 'Received no data from banner; skipping all blocks'
 
         r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
         # Process the r.text to find the errant, non-ASCII characters
@@ -87,36 +58,33 @@ class CascadeBlockProcessor:
 
             block_id = block.get('id')
 
-            result = self.process_block(changed_banner_data, block_id, all_program_codes, time_to_wait)
+            # gather codes that are in cascade
+            concentration_code = block.find('concentration_code').text
+            if concentration_code not in self.codes_found_in_cascade:
+                self.codes_found_in_cascade.append(concentration_code)
+
+            result = self.process_block(new_banner_data, block_id, time_to_wait)
             blocks.append(result)
 
         if send_email_after:
-            missing_data_codes = self.missing_data_codes
-
+            codes_not_found_in_banner = self.codes_not_found_in_banner
             caps_gs_sem_email_content = render_template('caps_gs_sem_recipients_email.html', **locals())
-            if len(missing_data_codes) > 0:
+            if len(codes_not_found_in_banner) > 0:
                 send_message('No CAPS/GS Banner Data Found', caps_gs_sem_email_content, html=True, caps_gs_sem=True)
 
-            unused_banner_codes = self.get_unused_banner_codes(changed_banner_data)
+            unused_banner_codes = self.get_unused_banner_codes(new_banner_data)
             caps_gs_sem_recipients = app.config['CAPS_GS_SEM_RECIPIENTS']
             admin_email_content = render_template('admin_email.html', **locals())
 
-            if missing_data_codes or unused_banner_codes:
+            if codes_not_found_in_banner or unused_banner_codes:
                 send_message('Readers Digest: Program Sync', admin_email_content, html=True)
 
         # reset the codes found
         self.codes_found_in_cascade = []
+        self.codes_not_found_in_banner = []
 
         # publish program feeds
         self.cascade.publish(app.config['PUBLISHSET_ID'], 'publishset')
-
-        # Write all hashes from the new rows to the .csv
-        with open(BANNER_HASHES_AUDIT_CSV_PATH, 'w+') as new_data_hashes:
-            for new_hash in audit_hashes:
-                new_data_hashes.write('{}\n'.format(new_hash))
-
-        # log any new concentration code
-        self.log_concentration_codes(changed_banner_data)
 
         return 'Finished sync of all CAPS/GS/SEM programs.'
 
@@ -134,17 +102,23 @@ class CascadeBlockProcessor:
 
     def process_block_by_id(self, id):
         # syncing a single block currently doesn't write the audit hashes or publish the program feeds
-        changed_rows, all_program_codes, audit_hashes = self.get_changed_banner_rows_and_distinct_prog_codes()
+        new_banner_data = self.get_new_banner_data()
 
-        return self.process_block(changed_rows, id, all_program_codes, 1)
+        return self.process_block(new_banner_data, id, 1)
 
     # we gather unused banner codes to send report emails after the sync
-    def get_unused_banner_codes(self, data):
+    def get_unused_banner_codes(self, new_banner_data):
         unused_banner_codes = []
-        for data in data:  # removed '.iteritems()', as it was throwing an error.
-            if data['prog_code'] not in self.codes_found_in_cascade and data['prog_code'] not in unused_banner_codes and data['prog_code'] not in app.config['SKIP_CONCENTRATION_CODES']:
+        for data in new_banner_data:  # removed '.iteritems()', as it was throwing an error.
+            # skip certain concentration codes.
+            if data['prog_code'] in app.config['SKIP_CONCENTRATION_CODES']:
+                continue
+            # skip if its already added
+            elif data['prog_code'] in unused_banner_codes:
+                continue
+            # otherwise, add it if its from banner, but not found in cascade
+            elif data['prog_code'] not in self.codes_found_in_cascade:
                 unused_banner_codes.append(data['prog_code'])
-                print(data['prog_code'])
 
         return unused_banner_codes
 
@@ -164,8 +138,7 @@ class CascadeBlockProcessor:
 
         return True
 
-    def process_block(self, changed_banner_data, block_id, all_program_codes, time_to_wait=1):
-        this_block_had_a_concentration_updated = False
+    def process_block(self, banner_data, block_id, time_to_wait=1):
 
         program_block = Block(self.cascade, block_id)
         block_asset = program_block.asset
@@ -186,25 +159,12 @@ class CascadeBlockProcessor:
         for concentration in concentrations:
             concentration_code = find(concentration, 'concentration_code', False)
 
-            # First, check if this concentration_code is found in the data from Banner.
-            if not isinstance(concentration_code, bool) and concentration_code not in all_program_codes:
-                print("No data found for program code %s, even though it's supposed to sync" % concentration_code)
-                self.missing_data_codes.append(
-                    """ %s (%s) """ % (find(block_asset, 'name', False), concentration_code)
-                )
-                continue
-            else:
-                # mark the code down as "seen"
-                self.codes_found_in_cascade.append(concentration_code)
-
             self.delete_and_clear_cohort_details(concentration)
 
             banner_details_added = 0
-            for row in changed_banner_data:  # removed '.iteritems()', as it was throwing an error.
+            for row in banner_data:  # removed '.iteritems()', as it was throwing an error.
                 if row['prog_code'] != concentration_code:
                     continue
-
-                this_block_had_a_concentration_updated = True
 
                 # if you need more banner details, copy more!
                 if banner_details_added != 0:
@@ -249,28 +209,33 @@ class CascadeBlockProcessor:
 
                 banner_details_added += 1
 
-        if this_block_had_a_concentration_updated:
-            try:
-                program_block.edit_asset(block_asset)
+            if banner_details_added == 0:
+                print("No data found for program code %s, even though it's supposed to sync" % concentration_code)
+                self.codes_not_found_in_banner.append(
+                    """ %s (%s) """ % (find(block_asset, 'name', False), concentration_code)
+                )
+            else:
+                # mark the code down as "seen"
+                self.codes_found_in_cascade.append(concentration_code)
+        try:
+            program_block.edit_asset(block_asset)
 
-                if not app.config['DEVELOPMENT']:
-                    # we are getting the concentration path and publishing out the applicable
-                    # program details folder and program index page.
-                    concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
-                    program_folder = '/' + concentration_page_path[:concentration_page_path.find('program-details')]
-                    # 1) publish the program-details folder
-                    self.cascade.publish(program_folder + 'program-details', 'folder')
+            if not app.config['DEVELOPMENT']:
+                # we are getting the concentration path and publishing out the applicable
+                # program details folder and program index page.
+                concentration_page_path = find(concentrations[0], 'concentration_page', False).get('pagePath')
+                program_folder = '/' + concentration_page_path[:concentration_page_path.find('program-details')]
+                # 1) publish the program-details folder
+                self.cascade.publish(program_folder + 'program-details', 'folder')
 
-                    # 2) publish the program index
-                    self.cascade.publish(program_folder + 'index', 'page')
-                time.sleep(time_to_wait)
-            except:
-                sentry.captureException()
-                return block_path + ' failed to sync'
+                # 2) publish the program index
+                self.cascade.publish(program_folder + 'index', 'page')
+            time.sleep(time_to_wait)
+        except:
+            sentry.captureException()
+            return block_path + ' failed to sync'
 
-            return block_path + ' successfully updated and synced'
-        else:
-            return block_path + " didn't have any data updated in Banner"
+        return block_path + ' successfully updated and synced'
 
 
 class AdultProgramsView(FlaskView):
