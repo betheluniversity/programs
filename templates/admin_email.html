@@ -13,7 +13,7 @@
 {# Codes we got data from Banner, but code doesn't exist in Cascade #}
 {% if unused_banner_codes %}
     <h2>Unused Banner Codes</h2>
-    <p>These are codes exist in Banner, but they are not being used by Cascade currently. Either fix the issue, or tell Web Development to ignore the code.</p>
+    <p>These are codes exist in Banner, but they are not being used by Cascade currently. Please fix the issue by connecting a program block to the(se) codes or tell Web Development to ignore the code.</p>
     <ul>
         {% for code in unused_banner_codes %}
             <li>{{ code }}</li>
