@@ -59,7 +59,7 @@ class CascadeBlockProcessor:
             block_id = block.get('id')
 
             # gather codes that are in cascade
-            concentration_code = block.find('concentration_code').text
+            concentration_code = block.find('.//concentration_code').text
             if concentration_code not in self.codes_found_in_cascade:
                 self.codes_found_in_cascade.append(concentration_code)
 
