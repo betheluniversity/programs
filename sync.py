@@ -234,7 +234,7 @@ class CascadeBlockProcessor:
                 self.cascade.publish(program_folder + 'index', 'page')
             time.sleep(time_to_wait)
         except:
-            sentry.captureException()
+            sentry_sdk.capture_exception()
             return block_path + ' failed to sync'
 
         return block_path + ' successfully updated and synced'
