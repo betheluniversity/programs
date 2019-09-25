@@ -29,7 +29,7 @@ XML_URL = ''
 
 RECIPIENTS = ['']
 
-RAVEN_URL = ''
+SENTRY_URL = ''
 
 """
 This variable is an absolute filepath of where on the server sync.py::get_changed_banner_rows_and_distinct_prog_codes()
