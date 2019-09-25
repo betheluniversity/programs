@@ -5,7 +5,7 @@ Flask-Classy
 requests
 suds-jurko
 Flask-Mail
-raven[flask]
+sentry_sdk[flask]
 beautifulsoup4
 cx_Oracle
 Werkzeug==0.14.1

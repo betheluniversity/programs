@@ -16,7 +16,7 @@ from bu_cascade.cascade_connector import Cascade
 from bu_cascade.asset_tools import find, update
 from flask import Flask, render_template
 from flask_classy import FlaskView, route
-from raven.contrib.flask import Sentry
+import sentry_sdk
 
 # Imports from elsewhere in this project
 from mail import send_message
@@ -26,7 +26,9 @@ from config import WSDL, AUTH, SITE_ID, STAGING_DESTINATION_ID, XML_URL
 app = Flask(__name__)
 app.config.from_object('config')
 
-sentry = Sentry(app, dsn=app.config['RAVEN_URL'])
+if app.config['SENTRY_URL']:
+    from sentry_sdk.integrations.flask import FlaskIntegration
+    sentry_sdk.init(dsn=app.config['SENTRY_URL'], integrations=[FlaskIntegration()])
 
 
 class CascadeBlockProcessor:
@@ -232,7 +234,7 @@ class CascadeBlockProcessor:
                 self.cascade.publish(program_folder + 'index', 'page')
             time.sleep(time_to_wait)
         except:
-            sentry.captureException()
+            sentry_sdk.capture_exception()
             return block_path + ' failed to sync'
 
         return block_path + ' successfully updated and synced'
