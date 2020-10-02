@@ -150,7 +150,7 @@ class CascadeBlockProcessor:
         if find(block_asset, 'definitionPath', False) != 'Blocks/Program':
             return block_path + ' not in Blocks/Program'
 
-        if block_id in app.config['SKIP_CONCENTRATION_CODES']:
+        if block_id in app.config['SKIP_BLOCK_IDS']:
             return block_path + ' is currently being skipped.'
 
         # gather concentrations
