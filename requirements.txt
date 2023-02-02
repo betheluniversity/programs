@@ -8,4 +8,4 @@ Flask-Mail
 sentry_sdk[flask]
 beautifulsoup4
 cx_Oracle
-Werkzeug==0.15.3
+Werkzeug==0.15.5
