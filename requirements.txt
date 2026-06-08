@@ -1,6 +1,6 @@
 bu-cascade>=3.12
 SQLAlchemy>=1.3.0
-Flask==1.0.4
+Flask==1.1.4
 Flask-Classy
 requests
 suds-jurko
@@ -8,4 +8,4 @@ Flask-Mail
 sentry_sdk[flask]
 beautifulsoup4
 cx_Oracle
-Werkzeug==0.15.3
+Werkzeug==2.0.1

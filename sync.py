@@ -40,6 +40,175 @@ class CascadeBlockProcessor:
     def get_new_banner_data(self):
         return json.loads(requests.get('https://wsapi.bethel.edu/program-data').content)
 
+    def update_catalog_urls(self, csv_path, dry_run=False):
+        try:
+            import csv
+            import os
+            import urllib.parse
+
+            summary_lines = []
+            summary_lines.append(f"Dry run: {dry_run}")
+            summary_lines.append(f"CSV file: {csv_path}")
+            summary_lines.append("")
+
+            url_mappings = self._load_url_mappings(csv_path)
+            if not url_mappings:
+                return "No URL mappings loaded. Check that url_changes.csv exists and has data."
+
+            summary_lines.append(f"Loaded {len(url_mappings)} URL mappings.")
+            summary_lines.append("")
+
+            r = requests.get(XML_URL, headers={'Cache-Control': 'no-cache'})
+            safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
+            block_xml = ET.fromstring(safe_text)
+
+            paths_to_ignore = []
+            blocks_processed = 0
+            blocks_updated = 0
+            errors = []
+
+            for block_elem in block_xml.findall('.//system-block'):
+                path_elem = block_elem.find('path')
+                if path_elem is None:
+                    continue
+                block_path = path_elem.text
+                if any([path in block_path for path in paths_to_ignore]):
+                    continue
+
+                block_id = block_elem.get('id')
+                if not block_id:
+                    continue
+
+                result = self._update_single_block_urls(block_id, url_mappings, dry_run)
+                blocks_processed += 1
+
+                if result['updated']:
+                    blocks_updated += 1
+                    summary_lines.append(f"✓ UPDATED: {block_path}")
+                    for ch in result['changes']:
+                        summary_lines.append(f"    Concentration #{ch['concentration_idx']+1}:")
+                        summary_lines.append(f"      Old: {ch['old']}")
+                        summary_lines.append(f"      New: {ch['new']}")
+                    summary_lines.append("")
+                elif result['error']:
+                    errors.append(result['error'])
+                    summary_lines.append(f"✗ ERROR on {block_path}: {result['error']}")
+                    summary_lines.append("")
+
+            summary_lines.append("=" * 60)
+            summary_lines.append(f"Summary: {blocks_updated} blocks updated out of {blocks_processed} processed.")
+            if errors:
+                summary_lines.append(f"Errors: {len(errors)}")
+            summary_lines.append("=" * 60)
+
+            return "\n".join(summary_lines)
+        except Exception as e:
+            return f"Exception in update_catalog_urls: {str(e)}"
+
+    def _load_url_mappings(self, csv_path):
+        import csv
+        import os
+        import urllib.parse
+
+        mappings = {}
+        if not os.path.isfile(csv_path):
+            return mappings
+        with open(csv_path, 'r', newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # CSV columns: new_url, old_url
+                new = row.get('new_url', '').strip()
+                old = row.get('old_url', '').strip()
+                if new and old:
+                    old_path = self._normalize_url_path(old)
+                    new_path = self._normalize_url_path(new)
+                    mappings[old_path] = new_path
+        return mappings
+
+    @staticmethod
+    def _normalize_url_path(url):
+        """Strip scheme, domain, trailing slash; ensure leading slash."""
+        import urllib.parse
+        parsed = urllib.parse.urlparse(url)
+        path = parsed.path
+        if path.endswith('/'):
+            path = path[:-1]
+        if not path.startswith('/'):
+            path = '/' + path
+        return path
+
+    def _update_single_block_urls(self, block_id, url_mappings, dry_run):
+        result = {'block_id': block_id, 'updated': False, 'changes': [], 'error': None}
+        try:
+            program_block = Block(self.cascade, block_id)
+            block_asset = program_block.asset
+        except Exception as e:
+            result['error'] = f"Failed to load block: {e}"
+            return result
+
+        if find(block_asset, 'definitionPath', False) != 'Blocks/Program':
+            return result
+
+        concentrations = find(program_block.structured_data, 'concentration')
+        if not concentrations:
+            return result
+        if not isinstance(concentrations, list):
+            concentrations = [concentrations]
+
+        modified = False
+        for idx, conc in enumerate(concentrations):
+            # Find the node for 'catalog-table-url' inside structuredDataNodes
+            nodes = conc.get('structuredDataNodes', {}).get('structuredDataNode', [])
+            url_node = None
+            for node in nodes:
+                if node.get('identifier') == 'catalog-table-url':
+                    url_node = node
+                    break
+            if not url_node:
+                continue
+
+            current_url = url_node.get('text', '')
+            print(f"DEBUG: block {block_id} catalog-table-url = '{current_url}'")
+            if not current_url:
+                continue
+
+            norm_current = self._normalize_url_path(current_url)
+            if norm_current in url_mappings:
+                new_url = url_mappings[norm_current]
+                if new_url != norm_current:
+                    # Update the text of the existing node
+                    url_node['text'] = new_url
+                    modified = True
+                    result['changes'].append({
+                        'concentration_idx': idx,
+                        'old': current_url,
+                        'new': new_url
+                    })
+
+        if not modified:
+            return result
+
+        if not dry_run:
+            try:
+                program_block.edit_asset(block_asset)
+                result['updated'] = True
+                # Optional: publish (same as before)
+                if concentrations:
+                    first_conc_page = find(concentrations[0], 'concentration_page', False)
+                    if first_conc_page and 'pagePath' in first_conc_page:
+                        page_path = first_conc_page.get('pagePath', '')
+                        if 'program-details' in page_path:
+                            program_folder = '/' + page_path[:page_path.find('program-details')]
+                            self.cascade.publish(program_folder + 'program-details', 'folder')
+                            self.cascade.publish(program_folder + 'index', 'page')
+            except Exception as e:
+                result['error'] = f"Save failed: {e}"
+                result['updated'] = False
+        else:
+            result['updated'] = True
+
+        return result
+
     def process_all_blocks(self, time_to_wait, send_email_after):
         new_banner_data = self.get_new_banner_data()
 
@@ -51,7 +220,7 @@ class CascadeBlockProcessor:
         safe_text = unicodedata.normalize('NFKD', r.text).encode('ascii', 'ignore')
         block_xml = ET.fromstring(safe_text)
 
-        paths_to_ignore = ['_shared-content/program-blocks/undergrad']
+        paths_to_ignore = []
 
         blocks = []
         for block in block_xml.findall('.//system-block'):
@@ -262,6 +431,13 @@ class AdultProgramsView(FlaskView):
     @route('/sync-one-path/<path:path>')
     def sync_one_path(self, path):
         return self.cbp.process_block_by_path(path)
+
+    @route('/update-catalog-urls')
+    @route('/update-catalog-urls/<dry_run>')
+    def update_catalog_urls(self, dry_run='false'):
+        dry_run = dry_run.lower() == 'true'
+        csv_path = 'url_changes.csv'   # adjust path if needed
+        return self.cbp.update_catalog_urls(csv_path, dry_run)
 
 
 AdultProgramsView.register(app, route_base="/")
