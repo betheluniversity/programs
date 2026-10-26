@@ -5,7 +5,7 @@ Flask-Classy
 requests
 suds-community==1.1.2
 Flask-Mail
-sentry_sdk[flask]
+sentry_sdk[flask]<1.0
 beautifulsoup4<4.13
 cx_Oracle
 Werkzeug==0.15.3
